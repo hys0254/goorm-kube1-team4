@@ -1,0 +1,152 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: t4ClusterEKS
+  region: ap-northeast-2
+  version: "1.20"
+
+vpc:
+  id: "vpc-0120cb38b9cb01faf"  # (optional, must match VPC ID used for each subnet below)
+  cidr: "192.168.0.0/16"       # (optional, must match CIDR used by the given VPC)
+  nat:
+    gateway: "Disable"
+  subnets:
+    public: 
+      ap-northeast-2a: 
+        id: "subnet-0a74dc9eb91068769"
+        cidr: "192.168.0.0/24"
+      ap-northeast-2c: 
+        id: "subnet-09d4a8108e12031bb"
+        cidr: "192.168.32.0/24"
+    private:
+      ap-northeast-2a:
+        id: "subnet-05c2b2cdcde7c0454"
+        cidr: "192.168.64.0/24" # (optional, must match CIDR used by the given subnet)
+      ap-northeast-2c:
+        id: "subnet-073d68063f1a6604f"
+        cidr: "192.168.96.0/24"  # (optional, must match CIDR used by the given subnet)
+
+# 기존 생성된 vpc 영역을 사용하는 경우, 사용할 수 없는 속성
+#availabilityZones: 
+#  - "ap-northeast-2a"
+#  - "ap-northeast-2b"
+ 
+managedNodeGroups:
+  - name: dbNode
+    instanceType: t2.small
+    instanceName: "dbIns"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    volumeSize: 10
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        ebs: true
+        autoScaler: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+#    subnets:
+#      - private-2a
+#      - private-2c
+
+  - name: wordpressNode
+    instanceType: t2.small
+    instanceName: "wordPressIns"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+#    subnets:
+#      - private-2a
+#      - private-2b
+
+  - name: nginxNode
+    instanceType: t2.small
+    instanceName: "nginxIns"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+#    subnets:
+#      - private-2a
+#      - private-2b
+
+#cloudWatch:
+#    clusterLogging:
+#        enableTypes: ["*"]
+
+iam:
+  withOIDC: true
+  serviceAccounts:
+  - metadata:
+      name: s3-reader
+      # if no namespace is set, "default" will be used;
+      # the namespace will be created if it doesn't exist already
+      namespace: backend-apps
+      labels: {aws-usage: "application"}
+    attachPolicyARNs:
+    - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+  - metadata:
+      name: aws-load-balancer-controller
+      namespace: kube-system
+    wellKnownPolicies:
+      awsLoadBalancerController: true
+  - metadata:
+      name: ebs-csi-controller-sa
+      namespace: kube-system
+    wellKnownPolicies:
+      ebsCSIController: true
+  - metadata:
+      name: efs-csi-controller-sa
+      namespace: kube-system
+    wellKnownPolicies:
+      efsCSIController: true
+  - metadata:
+      name: cert-manager
+      namespace: cert-manager
+    wellKnownPolicies:
+      certManager: true
+  - metadata:
+      name: cluster-autoscaler
+      namespace: kube-system
+      labels: {aws-usage: "cluster-ops"}
+    wellKnownPolicies:
+      autoScaler: true
+  - metadata:
+      name: cache-access
+      namespace: backend-apps
+      labels: {aws-usage: "application"}
+    attachPolicyARNs:
+    - "arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess"
+    - "arn:aws:iam::aws:policy/AmazonElastiCacheFullAccess"
+  - metadata:
+      name: autoscaler-service
+      namespace: kube-system
+    attachPolicy: # inline policy can be defined along with `attachPolicyARNs`
+      Version: "2012-10-17"
+      Statement:
+      - Effect: Allow
+        Action:
+        - "autoscaling:DescribeAutoScalingGroups"
+        - "autoscaling:DescribeAutoScalingInstances"
+        - "autoscaling:DescribeLaunchConfigurations"
+        - "autoscaling:DescribeTags"
+        - "autoscaling:SetDesiredCapacity"
+        - "autoscaling:TerminateInstanceInAutoScalingGroup"
+        - "ec2:DescribeLaunchTemplateVersions"
+        Resource: '*'

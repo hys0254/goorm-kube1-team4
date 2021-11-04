@@ -12,6 +12,90 @@ metadata:
   region: ap-northeast-2
   version: "1.20"
 
+vpc:
+  id: "vpc-0120cb38b9cb01faf"  # (optional, must match VPC ID used for each subnet below)
+  cidr: "192.168.0.0/16"       # (optional, must match CIDR used by the given VPC)
+  nat:
+    gateway: "Disable"
+  subnets:
+    public: 
+      ap-northeast-2a: 
+        id: "subnet-0a74dc9eb91068769"
+        cidr: "192.168.0.0/24"
+      ap-northeast-2c: 
+        id: "subnet-09d4a8108e12031bb"
+        cidr: "192.168.32.0/24"
+    private:
+      ap-northeast-2a:
+        id: "subnet-05c2b2cdcde7c0454"
+        cidr: "192.168.64.0/24" # (optional, must match CIDR used by the given subnet)
+      ap-northeast-2c:
+        id: "subnet-073d68063f1a6604f"
+        cidr: "192.168.96.0/24"  # (optional, must match CIDR used by the given subnet)
+
+# 기존 생성된 vpc 영역을 사용하는 경우, 사용할 수 없는 속성
+#availabilityZones: 
+#  - "ap-northeast-2a"
+#  - "ap-northeast-2b"
+ 
+managedNodeGroups:
+  - name: dbNode
+    instanceType: t2.small
+    instanceName: "dbIns"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    volumeSize: 10
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        ebs: true
+        autoScaler: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+#    subnets:
+#      - private-2a
+#      - private-2c
+
+  - name: wordpressNode
+    instanceType: t2.small
+    instanceName: "wordPressIns"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+#    subnets:
+#      - private-2a
+#      - private-2b
+
+  - name: nginxNode
+    instanceType: t2.small
+    instanceName: "nginxIns"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+#    subnets:
+#      - private-2a
+#      - private-2b
+
+#cloudWatch:
+#    clusterLogging:
+#        enableTypes: ["*"]
+
 iam:
   withOIDC: true
   serviceAccounts:
@@ -73,70 +157,6 @@ iam:
         - "ec2:DescribeLaunchTemplateVersions"
         Resource: '*'
 
-vpc: 
-  cidr: "192.168.0.0/16"
-  nat:
-    gateway: "HighlyAvailable"
-  clusterEndpoints:
-    publicAccess: false
-    privateAccess: true
-
-# 기존 생성된 vpc 영역을 사용하는 경우, 사용할 수 없는 속성
-availabilityZones: ["ap-northeast-2a","ap-northeast-2b"]
- 
-managedNodeGroups:
-  - name: dbNode
-    instanceType: t2.small
-    instanceName: "dbIns"
-    minSize: 2
-    desiredCapacity: 2
-    maxSize: 3
-    volumeSize: 10
-    privateNetworking: true
-    iam:
-      withAddonPolicies:
-        ebs: true
-        autoScaler: true
-    ssh:
-      allow: true
-
-  - name: wordpressNode
-    instanceType: t2.small
-    instanceName: "wordPressIns"
-    minSize: 2
-    desiredCapacity: 2
-    maxSize: 3
-    privateNetworking: true
-    iam:
-      withAddonPolicies:
-        autoScaler: true
-    availabilityZones: ["ap-northeast-2a","ap-northeast-2b"]
-#    subnets:
-#      - private-2a
-#      - private-2b
-#    ssh:
-#      allow: true
-
-  - name: nginxNode
-    instanceType: t2.small
-    instanceName: "nginxIns"
-    minSize: 2
-    desiredCapacity: 2
-    maxSize: 3
-    privateNetworking: true
-    iam:
-      withAddonPolicies:
-        autoScaler: true
-    availabilityZones: ["ap-northeast-2a","ap-northeast-2b"]
-#    subnets:
-#      - private-2a
-#      - private-2b
-#    ssh:
-#      allow: true
-
-#cloudWatch:
-#    clusterLogging:
-#        enableTypes: ["*"]
 ```
 
 
