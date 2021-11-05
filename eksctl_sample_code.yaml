@@ -41,6 +41,10 @@ managedNodeGroups:
     maxSize: 3
     volumeSize: 10
     privateNetworking: true
+    ssh: 
+      allow: true
+      sourceSecurityGroupIds: 
+        - "sg-023d8a5979ceaeccd"
     iam:
       withAddonPolicies:
         ebs: true
