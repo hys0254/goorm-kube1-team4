@@ -47,6 +47,8 @@ managedNodeGroups:
       withAddonPolicies:
         ebs: true
         autoScaler: true
+        externalDNS: true
+        certManager: true
     availabilityZones: 
       - "ap-northeast-2a"
       - "ap-northeast-2c"
@@ -64,6 +66,8 @@ managedNodeGroups:
     iam:
       withAddonPolicies:
         autoScaler: true
+        externalDNS: true
+        certManager: true
     availabilityZones: 
       - "ap-northeast-2a"
       - "ap-northeast-2c"
@@ -81,6 +85,8 @@ managedNodeGroups:
     iam:
       withAddonPolicies:
         autoScaler: true
+        externalDNS: true
+        certManager: true
     availabilityZones: 
       - "ap-northeast-2a"
       - "ap-northeast-2c"
