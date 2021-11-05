@@ -12,7 +12,7 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 #################### intellij
-!/.idea/
+!.idea/
 
 #################### wordpress
 # ignore everything in the root except the "wp-content" directory.
