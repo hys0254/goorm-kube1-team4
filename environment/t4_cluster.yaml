@@ -63,6 +63,8 @@ managedNodeGroups:
     desiredCapacity: 2
     maxSize: 3
     privateNetworking: true
+    ssh: 
+      allow: true
     iam:
       withAddonPolicies:
         autoScaler: true
@@ -82,6 +84,8 @@ managedNodeGroups:
     desiredCapacity: 2
     maxSize: 3
     privateNetworking: true
+    ssh: 
+      allow: true
     iam:
       withAddonPolicies:
         autoScaler: true
