@@ -8,83 +8,74 @@ AWS_REGION=`eksctl get cluster --output json | jq -r '.[0].metadata.region'`
 VPC_ID=`eksctl get cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} --output json | jq -r '.[0].ResourcesVpcConfig.VpcId'`
 NG_ROLE=`kubectl -n kube-system describe configmap aws-auth | grep rolearn`
 ACCOUNT=${NG_ROLE:24:12}
-
+echo 'Variable Print'
+echo 'CLUSTER_NAME : '${CLUSTER_NAME}
+echo 'AWS_REGION : '${AWS_REGION}
+echo 'VPC_ID : '${VPC_ID}
+echo 'NG_ROLE : '${NG_ROLE}
+echo 'ACCOUNT : '${ACCOUNT}
+echo ''
 
 # 단계1 : AWS 로드밸런서 컨트롤러 IAM 정책 다운로드
-echo '>Step1 : Download AWSLoadBalancerControllerIAMPolicy  '
+echo '> Step1 : Download AWSLoadBalancerControllerIAMPolicy  '
 curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy.json
 echo ''
 
 # 단계2 : 단계1에서 다운로드한 정책으로 IAM 정책 만듦. - 기존에 만들어진 정책이 존재할 시, 단계 스킵하도록 if문 구성
-echo '>>Step2 : CREATE AWSLoadBalancerControllerIAMPolicy  '
-if [ `aws iam list-policies | grep AWSLoadBalancerControllerIAMPolicy` ]
+echo '>> Step2 : CREATE AWSLoadBalancerControllerIAMPolicy  '
+# if [ "`aws iam list-policies | grep AWSLoadBalancerControllerIAMPolicy`" ];then echo '>> AWSLoadBalancerControllerIAMPolicy was installed continue next step ';else `aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json`;fi
+if [ "`aws iam list-policies | grep AWSLoadBalancerControllerIAMPolicy`" ]
 then
- echo '>> AWSLoadBalancerControllerIAMPolicy was installed continue next step '
+  echo '>> AWSLoadBalancerControllerIAMPolicy was installed continue next step '
 else
- `aws iam create-policy \
-  --policy-name AWSLoadBalancerControllerIAMPolicy  \
-  --policy-document file://iam_policy.json`
+  aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
 fi
 echo ''
 
 # 단계3 : kube-system 네임스페이스에 aws-load-balancer-controller이라는 kubernetes 서비스 계정 추가
-echo '>>>Step3 : Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy  '
-if [ `eksctl create iamserviceaccount \
-        --cluster=${CLUSTER_NAME} \
-        --namespace=kube-system \
-        --name=aws-load-balancer-controller \
-        --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy \
-        --override-existing-serviceaccounts \
-        --approve` ]
+echo '>>> Step3 : Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy  '
+# if [ "`eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve`" ];then echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success';else `eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve`;`eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve`;fi
+if [ "`eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve`" ]
 then
-echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
+  echo 'IAM OIDC is not exist... Create IAM OIDC Provider  '
+  if [ "`eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve`" ]
+  then
+    eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+    echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
+  fi
 else
-  `eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve`
-  sleep 5
-  `eksctl create iamserviceaccount \
-           --cluster=${CLUSTER_NAME} \
-           --namespace=kube-system \
-           --name=aws-load-balancer-controller \
-           --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy \
-           --override-existing-serviceaccounts \
-           --approve`
+  echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
 fi
+echo ''
 
 # 단계4 : 단계4 중 a, b 두 단계의 kubernets용 수신 컨트롤러 설치 제거는 건너뜀. 구성하지 않을 것 같아서..! 우선은 패스 | 하단에는 c 단계3에서 생성한 IAM 역할에 정책 추가 부분만 넣음.
 # 단계4-c-1 : IAM 정책 다운로드
-echo '>>>>Step4 : Download AWSLoadBalancerControllerAdditionalIAMPolicy  '
+echo '>>>> Step4 : Download AWSLoadBalancerControllerAdditionalIAMPolicy  '
 curl -o iam_policy_v1_to_v2_additional.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy_v1_to_v2_additional.json
 echo ''
 
 # 단계4-c-2 : IAM 정책 생성 | 기존에 생성된 정책이 존재할 시, 다음 단계로 넘어가도록 if문 구성
 echo '>>> Create iamserviceaccount with AWSLoadBalancerControllerAdditionalIAMPolicy  '
-if [ `aws iam list-policies | grep AWSLoadBalancerControllerAdditionalIAMPolicy` ]
+if [ "`aws iam list-policies | grep AWSLoadBalancerControllerAdditionalIAMPolicy`" ]
 then
-echo '>>> AWSLoadBalancerControllerAdditionalIAMPolicy was installed continue next step '
+  echo '>>> AWSLoadBalancerControllerAdditionalIAMPolicy was installed continue next step '
 else
- `aws iam create-policy \
-    --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy \
-    --policy-document file://iam_policy_v1_to_v2_additional.json`
+  aws iam create-policy --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy --policy-document file://iam_policy_v1_to_v2_additional.json
 fi
 echo ''
 
 # 단계4-c-3 : 단계4-c-2에서 생성한 정책과 단계3에서 생성한 IAM 역할 연결
 echo '>>> AWSLoadBalancerControllerAdditionalIAMPolicy Attach to Role '
 ALBRoleName=`aws iam list-roles | jq -r '.Roles[].RoleName' | grep eksctl-${CLUSTER_NAME}-addon`
-
-aws iam attach-role-policy \
-  --role-name ${ALBRoleName} \
-  --policy-arn arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerAdditionalIAMPolicy
-
+aws iam attach-role-policy --role-name ${ALBRoleName} --policy-arn arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerAdditionalIAMPolicy
+echo ''
 
 
 # 단계5 :  Kubernetes 매니페스트를 적용하여 AWS 로드 밸런서 컨트롤러를 설치
 # 단계5-a : cert-manager를 설치하여 인증서 구성 Webhook에 주입.(Webhook주입이 무엇인지는 알아보는 중..)
-echo '>>>>>Step5 : Install AWS Load Balancer Controller... '
+echo '>>>>> Step5 : Install AWS Load Balancer Controller... '
 echo '>>> Install cert-manager '
-kubectl apply \
-    --validate=false \
-    -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
 
 # 단계5-b-1 : 컨트롤러 사양 다운로드
 echo '>>> Download Controller Spec '
@@ -105,11 +96,13 @@ sed -i '545,553d' v2_2_0_full.yaml
 #  namespace: kube-system
 
 # 단계5-b-3 : 컨트롤러 사양 적용
+echo '>>> apply v2_2_0_full.yaml '
 kubectl apply -f v2_2_0_full.yaml
+echo ''
 
 echo '===================== ALB Controller creation Success ====================='
 echo "if you want to check aws-load-balancer-controller run well, type command'  kubectl get deployment -n kube-system aws-load-balancer-controller  ' "
-
+echo ''
 #ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 기존 Ingress Controller#
 #echo ''
 #echo '>>> Check if ALB-Ingress-Controller Installed  '
