@@ -36,15 +36,17 @@ echo ''
 echo '>>> Step3 : Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy  '
 OIDCisuser=`aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text`
 OIDCProvider=${OIDCisuser:49}
+echo 'OIDCisuser : '${OIDCisuser}
+echo 'OIDCProvider : '${OIDCProvider}
+
 if [ "`aws iam list-open-id-connect-providers | grep ${OIDCProvider}`" ]
 then
-  echo 'IAM OIDC is not exist... Create IAM OIDC Provider  '
-  if [ "`eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve`" ]
-  then
-    eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
-  fi
+  echo 'IAM OIDC is exist... Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy  '
+  eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+  echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
 else
+  echo 'IAM OIDC is not exist... Create IAM OIDC Provider  '
+  eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve
   eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
   echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
 fi
