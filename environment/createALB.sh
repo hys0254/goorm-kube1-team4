@@ -28,14 +28,15 @@ if [ "`aws iam list-policies | grep AWSLoadBalancerControllerIAMPolicy`" ]
 then
   echo '>> AWSLoadBalancerControllerIAMPolicy was installed continue next step '
 else
-  aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+  aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json | grep AWSLoadBalancerControllerIAMPolicy
 fi
 echo ''
 
 # 단계3 : kube-system 네임스페이스에 aws-load-balancer-controller이라는 kubernetes 서비스 계정 추가
 echo '>>> Step3 : Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy  '
-# if [ "`eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve`" ];then echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success';else `eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve`;`eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve`;fi
-if [ "`eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve`" ]
+OIDCisuser=`aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text`
+OIDCProvider=${OIDCisuser:49}
+if [ "`aws iam list-open-id-connect-providers | grep ${OIDCProvider}`" ]
 then
   echo 'IAM OIDC is not exist... Create IAM OIDC Provider  '
   if [ "`eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve`" ]
@@ -60,7 +61,7 @@ if [ "`aws iam list-policies | grep AWSLoadBalancerControllerAdditionalIAMPolicy
 then
   echo '>>> AWSLoadBalancerControllerAdditionalIAMPolicy was installed continue next step '
 else
-  aws iam create-policy --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy --policy-document file://iam_policy_v1_to_v2_additional.json
+  aws iam create-policy --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy --policy-document file://iam_policy_v1_to_v2_additional.json | grep AWSLoadBalancerControllerAdditionalIAMPolicy
 fi
 echo ''
 
@@ -76,10 +77,11 @@ echo ''
 echo '>>>>> Step5 : Install AWS Load Balancer Controller... '
 echo '>>> Install cert-manager '
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
-
+echo ''
 # 단계5-b-1 : 컨트롤러 사양 다운로드
 echo '>>> Download Controller Spec '
 curl -o v2_2_0_full.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/v2_2_0_full.yaml
+echo ''
 # 단계5-b-2 : 컨트롤러 사양 파일 편집 -> your-cluster-name 항목 편집 / ServiceAccount 섹션 삭제(545~553라인)
 echo '>>> Edit Controller Spec -> ClusterName & Delete ServiceAccount Spec '
 sed -i 's/your-cluster-name/'${CLUSTER_NAME}'/g' v2_2_0_full.yaml
