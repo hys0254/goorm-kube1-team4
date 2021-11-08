@@ -71,7 +71,8 @@ echo ''
 
 # 단계4-c-3 : 단계4-c-2에서 생성한 정책과 단계3에서 생성한 OIDC 공급자 역할 연결
 echo '>>> AWSLoadBalancerControllerAdditionalIAMPolicy Attach to Role '
-ALBRoleName=`aws iam list-roles | jq -r '.Roles[].RoleName' | grep eksctl-${CLUSTER_NAME}-addon`
+ALBCloudStackName=`aws cloudformation list-stacks | jq -r '.StackSummaries[0].StackName'`
+ALBRoleName=`aws cloudformation describe-stacks --stack-name ${ALBCloudStackName} --query='Stacks[].Outputs[?OutputKey==\`Role1\`].OutputValue' --output json | jq -r '.[0] | .[0]' | cut -f 2 -d "/"`
 aws iam attach-role-policy --role-name ${ALBRoleName} --policy-arn arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerAdditionalIAMPolicy
 echo ''
 
