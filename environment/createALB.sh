@@ -45,6 +45,7 @@ then
     echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
   fi
 else
+  eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=aws-load-balancer-controller --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
   echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
 fi
 echo ''
