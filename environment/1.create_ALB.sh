@@ -8,7 +8,7 @@ AWS_REGION=`eksctl get cluster --output json | jq -r '.[0].metadata.region'`
 VPC_ID=`eksctl get cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} --output json | jq -r '.[0].ResourcesVpcConfig.VpcId'`
 NG_ROLE=`kubectl -n kube-system describe configmap aws-auth | grep rolearn`
 ACCOUNT=${NG_ROLE:24:12}
-echo 'Variable Print'
+echo 'Variable Print Before Making AWSLoadBalancerController  '
 echo 'CLUSTER_NAME : '${CLUSTER_NAME}
 echo 'AWS_REGION : '${AWS_REGION}
 echo 'VPC_ID : '${VPC_ID}
@@ -18,7 +18,8 @@ echo ''
 
 # 단계1 : AWS 로드밸런서 컨트롤러 IAM 정책 다운로드
 echo '> Step1 : Download AWSLoadBalancerControllerIAMPolicy  '
-curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy.json
+mkdir ALB
+curl -o ALB/iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy.json
 echo ''
 
 # 단계2 : 단계1에서 다운로드한 정책으로 IAM 정책 만듦. - 기존에 만들어진 정책이 존재할 시, 단계 스킵하도록 if문 구성
@@ -32,7 +33,7 @@ else
 fi
 echo ''
 
-# 단계3 : kube-system 네임스페이스에 aws-load-balancer-controller이라는 kubernetes 서비스 계정 추가
+# 단계3 : 기존 OIDC 공급자 생성 여부 확인 -> aws-load-balancer 공급자와 공급자를 통한 ALB 컨트롤러 생성.
 echo '>>> Step3 : Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy  '
 OIDCisuser=`aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text`
 OIDCProvider=${OIDCisuser:49}
@@ -55,7 +56,7 @@ echo ''
 # 단계4 : 단계4 중 a, b 두 단계의 kubernets용 수신 컨트롤러 설치 제거는 건너뜀. 구성하지 않을 것 같아서..! 우선은 패스 | 하단에는 c 단계3에서 생성한 IAM 역할에 정책 추가 부분만 넣음.
 # 단계4-c-1 : IAM 정책 다운로드
 echo '>>>> Step4 : Download AWSLoadBalancerControllerAdditionalIAMPolicy  '
-curl -o iam_policy_v1_to_v2_additional.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy_v1_to_v2_additional.json
+curl -o ALB/iam_policy_v1_to_v2_additional.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy_v1_to_v2_additional.json
 echo ''
 
 # 단계4-c-2 : IAM 정책 생성 | 기존에 생성된 정책이 존재할 시, 다음 단계로 넘어가도록 if문 구성
@@ -68,7 +69,7 @@ else
 fi
 echo ''
 
-# 단계4-c-3 : 단계4-c-2에서 생성한 정책과 단계3에서 생성한 IAM 역할 연결
+# 단계4-c-3 : 단계4-c-2에서 생성한 정책과 단계3에서 생성한 OIDC 공급자 역할 연결
 echo '>>> AWSLoadBalancerControllerAdditionalIAMPolicy Attach to Role '
 ALBRoleName=`aws iam list-roles | jq -r '.Roles[].RoleName' | grep eksctl-${CLUSTER_NAME}-addon`
 aws iam attach-role-policy --role-name ${ALBRoleName} --policy-arn arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerAdditionalIAMPolicy
