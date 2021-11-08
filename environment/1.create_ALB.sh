@@ -85,12 +85,12 @@ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/relea
 echo ''
 # 단계5-b-1 : 컨트롤러 사양 다운로드
 echo '>>> Download Controller Spec '
-curl -o v2_2_0_full.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/v2_2_0_full.yaml
+curl -o ALB/v2_2_0_full.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/v2_2_0_full.yaml
 echo ''
 # 단계5-b-2 : 컨트롤러 사양 파일 편집 -> your-cluster-name 항목 편집 / ServiceAccount 섹션 삭제(545~553라인)
 echo '>>> Edit Controller Spec -> ClusterName & Delete ServiceAccount Spec '
-sed -i 's/your-cluster-name/'${CLUSTER_NAME}'/g' v2_2_0_full.yaml
-sed -i '545,553d' v2_2_0_full.yaml
+sed -i 's/your-cluster-name/'${CLUSTER_NAME}'/g' ALB/v2_2_0_full.yaml
+sed -i '545,553d' ALB/v2_2_0_full.yaml
 # 545~553번 라인 내용
 #---
 #apiVersion: v1
