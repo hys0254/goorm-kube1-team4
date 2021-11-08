@@ -33,6 +33,7 @@ fi
 echo ''
 
 # 단계3 : 기존 OIDC 공급자 여부 확인 및 없을 시 생성.
+echo '>>> Step3 : Check AmazonEKS_EBS_CSI_Driver_Policy associate with OIDCProvider '
 OIDCisuser=`aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text`
 OIDCProvider=${OIDCisuser:49}
 echo 'OIDCisuser : '${OIDCisuser}
@@ -51,15 +52,23 @@ else
 fi
 echo ''
 
-# 단계4 : OIDC 역할과 ebs-esi-controller 연결 스크립트
-# CSICloudStackName=`aws cloudformation list-stacks | jq -r '.StackSummaries[0].StackName'`
-# CSIRoleName=`aws cloudformation describe-stacks --stack-name ${CSICloudStackName} --query='Stacks[].Outputs[?OutputKey==\`Role1\`].OutputValue' --output json | jq -r '.[0] | .[0]' | cut -f 2 -d "/"`
-# aws iam attach-role-policy --role-name ${CSICloudStackName} --policy-arn arn:aws:iam::${ACCOUNT}:policy/AmazonEKS_EBS_CSI_Driver_Policy
+# 단계 4 : OIDC 역할과 ebs-esi-controller 연결 스크립트
+echo '>>>> Step 4 : Check AmazonEKS_EBS_CSI_Driver_Policy associate with OIDCProvider '
+CSICloudStackName=`aws cloudformation list-stacks | jq -r '.StackSummaries[0].StackName'`
+CSIRoleName=`aws cloudformation describe-stacks --stack-name ${CSICloudStackName} --query='Stacks[].Outputs[?OutputKey==\`Role1\`].OutputValue' --output json | jq -r '.[0] | .[0]'`
+echo ''
+# aws cloudformation describe-stacks --stack-name ${CSICloudStackName} --query='Stacks[].Outputs[?OutputKey==`Role1`].OutputValue' --output json | jq -r '.[0] | .[0]'
 
 # 단계 5 : EBS CSI Driver 배포용 git clone 및 정보 수정
-mkdir ebs-driver
-git clone https://github.com/kubernetes-sigs/aws-ebs-csi-driver.git
-
+echo '>>>>> Step 5 : Cloning & Edit aws-ebs-csi-driver '
+git clone https://github.com/kubernetes-sigs/aws-ebs-csi-driver.git CSI/aws-ebs-csi-driver
+echo '  annotations:' >> CSI/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+echo '    eks.amazonaws.com/role-arn: '${CSIRoleName} >> CSI/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+cat CSI/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+echo ''
+echo 'Edit serviceaccount-csi-controller.yaml Finish'
 echo ''
 
-
+# 단계 6 : EBS CSI Driver 실행
+echo '>>>>> Step 6 : Run aws-ebs-csi-driver '
+kubectl apply -k CSI/aws-ebs-csi-driver/deploy/kubernetes/base
