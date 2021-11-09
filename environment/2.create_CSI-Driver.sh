@@ -28,7 +28,7 @@ if [ "`aws iam list-policies | grep AmazonEKS_EBS_CSI_Driver_Policy`" ]
 then
   echo '>> AmazonEKS_EBS_CSI_Driver_Policy was installed continue next step '
 else
-  aws iam create-policy --policy-name AmazonEKS_EBS_CSI_Driver_Policy --policy-document file://example-iam-policy.json | grep AmazonEKS_EBS_CSI_Driver_Policy
+  aws iam create-policy --policy-name AmazonEKS_EBS_CSI_Driver_Policy --policy-document file://CSI/example-iam-policy.json | grep AmazonEKS_EBS_CSI_Driver_Policy
 fi
 echo ''
 

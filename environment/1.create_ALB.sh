@@ -29,7 +29,7 @@ if [ "`aws iam list-policies | grep AWSLoadBalancerControllerIAMPolicy`" ]
 then
   echo '>> AWSLoadBalancerControllerIAMPolicy was installed continue next step '
 else
-  aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json | grep AWSLoadBalancerControllerIAMPolicy
+  aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://ALB/iam_policy.json | grep AWSLoadBalancerControllerIAMPolicy
 fi
 echo ''
 
@@ -65,7 +65,7 @@ if [ "`aws iam list-policies | grep AWSLoadBalancerControllerAdditionalIAMPolicy
 then
   echo '>>> AWSLoadBalancerControllerAdditionalIAMPolicy was installed continue next step '
 else
-  aws iam create-policy --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy --policy-document file://iam_policy_v1_to_v2_additional.json | grep AWSLoadBalancerControllerAdditionalIAMPolicy
+  aws iam create-policy --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy --policy-document file://ALB/iam_policy_v1_to_v2_additional.json | grep AWSLoadBalancerControllerAdditionalIAMPolicy
 fi
 echo ''
 
@@ -104,7 +104,7 @@ sed -i '545,553d' ALB/v2_2_0_full.yaml
 
 # 단계5-b-3 : 컨트롤러 사양 적용
 echo '>>> apply v2_2_0_full.yaml '
-kubectl apply -f v2_2_0_full.yaml
+kubectl apply -f ALB/v2_2_0_full.yaml
 echo ''
 
 echo '===================== ALB Controller creation Success ====================='
