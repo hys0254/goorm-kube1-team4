@@ -46,7 +46,7 @@ then
   echo 'Create iamserviceaccount with AmazonEKS_EBS_CSI_Driver_Policy success'
 else
   echo 'IAM OIDC is not exist... Create IAM OIDC Provider  '
-  eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=t4ClusterEKS --approve
+  eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=${CLUSTER_NAME} --approve
   eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=ebs-csi-controller-sa --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AmazonEKS_EBS_CSI_Driver_Policy --override-existing-serviceaccounts --approve
   echo 'Create iamserviceaccount with AmazonEKS_EBS_CSI_Driver_Policy success'
 fi
