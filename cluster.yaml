@@ -1,0 +1,238 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: project-cluster
+  region: ap-northeast-2
+  version: "1.21"
+#  tag:
+#  annotations:
+
+# availabilityZones:
+#   - ap-northeast-2a
+#   - ap-northeast-2b
+# 'vpc.subnets and availabilityZones cannot be set at the same time'
+
+
+# ----------------------------------------------------------------------
+vpc:
+  id: vpc-07caa63d29fe5bc92
+  cidr: "10.0.0.0/16"
+  securityGroup:
+  subnets:
+    private:
+      ap-northeast-2a:
+        id: "subnet-0c473e97646f3487f"
+        cidr: "10.0.1.0/24"
+      ap-northeast-2c:
+        id: "subnet-00de49a666173085b"
+        cidr: "10.0.20.0/24"
+
+    public:
+      ap-northeast-2a:
+        id: "subnet-0de1caa568bd3cae6"
+        cidr: "10.0.0.0/24"
+      ap-northeast-2c:
+        id: "subnet-010f6cacc4b5a01e3"
+        cidr: "10.0.10.0/24"
+
+#  extraCIDRS:
+#  shareNodeSecurityGroup:
+#  manageSHaredNodeSecurityGroupRules:
+#  autoAllocateIPv6:
+#  nat:
+#  clusterEndpoints:
+#  publicAccessCIDRs:
+
+# ----------------------------------------------------------------------
+# nodeGroups:
+#   - name: ng-private
+#     amiFamily: Ubuntu2004
+#     instanceType: t2.small
+#     # instanceName:
+#     # instancePrefix:
+#     # instanceSelector:
+#     subnets:
+#         - subnet-01914c6dc58caef62
+
+#     desiredCapacity:
+#     minSize:
+#     maxSize:
+#     volumeSize: 
+
+#     ssh:
+#       allow: true # will use ~/.ssh/id_rsa.pub as the default ssh key
+
+#     labels:
+#     tags:
+#     iam:
+#     ami:
+
+#     volumeName:
+#     volumeEncrypted:
+#     volumeKmsKeyID:
+#     volumeIOPS:
+#     volumeThroughput:
+#     ebsOptimized:
+
+#     privateNetworking:
+#     maxPodsPerNode:
+#     asgSuspendProcesses:
+#     preBootstrapCommands:
+#     overrideBootstrapCommand:
+#     disableIMDSv1:
+#     disablePodIMDS:
+#     placment:
+#       groupName:
+#     efaEnabled:
+#     bottlerocket:
+#     enableDetailedMonitoring:
+#     instancesDistribution:
+#     asgMetricsCollections:
+#     cpuCredits:
+#     classicLoadBalancerNames:
+#     targetGroupARNs:
+#     taints:
+#     udateConfig:
+#     clusterDNS:
+#     kubeletExtraConfig:
+#     containerRuntime:
+
+# ----------------------------------------------------------------------
+managedNodeGroups:
+  - name: ng-private
+    instanceType: t2.small
+
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 3
+    volumeSize: 10
+    
+    privateNetworking: true
+    subnets:
+      - subnet-0c473e97646f3487f
+      - subnet-00de49a666173085b
+
+  - name: ng-public
+    instanceType: t2.small
+
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 2
+    volumeSize: 10
+    
+    subnets:
+      - subnet-0de1caa568bd3cae6
+      - subnet-010f6cacc4b5a01e3
+
+
+
+
+  # - name: ng-private-a
+    # amiFamily: Ubuntu2004
+    # instanceType: t3.small
+    # instancePrefix:
+    # instanceName:
+    # instanceTypes:
+
+    # availabilityZones: # only one of managedNodeGroups[0].subnets or managedNodeGroups[0].availabilityZones should be set
+    # subnets:
+    #   - subnet-01914c6dc58caef62
+    
+    # desiredCapacity: 1
+    # minSize: 1
+    # maxSize: 1
+    # volumeSize:
+
+    # ssh:
+      # allow:
+      # publicKeyPath:
+      # publicKey:
+      # publicKeyName:
+      # sourceSecurityGroupIds:
+      # enableSsm: true # ssh.enableSSM` is deprecated
+
+    # labels:
+    # tags:
+    # iam:
+    # ami:
+
+    # volumeType:
+    # volumeName:
+    # volumeEncrypted:
+    # volumeKmsKeyID:
+    # volumeIOPS:
+    # volumeThroughput:
+    # ebsOptimized:
+
+    # securityGroups:
+    # privageNetworking:
+    # maxPodsPerNode:
+    # asgSuspendProcesses:
+    # preBootstrapCommands:
+    # disableIMDSv1:
+    # disablePodIMDS:
+    # placement:
+    # efaEnabled:
+    # instanceSelector:
+    # volumeType:
+    # bottlerocket:
+    # enableDetailedMonitoring:
+    # spot:
+    # taints:
+    # updateConfig:
+    # launchTemplate:
+    # releaseVersion:
+    
+
+# ----------------------------------------------------------------------
+# ---------------------------------
+# kubernetesNetworkConfig
+# privateCluster
+# addons
+# iam
+# identitiyProviders
+# ---------------------------------
+# fargeateProfiles:
+#  - name:
+#    ProExecutionRoleARN:
+#    selector:
+#      - namespace:
+#        labels:
+#    subnets:
+#    tags:
+#    status:
+# ---------------------------------
+# cloudWatch:
+#  clusterLogging:
+#    enableTypes:
+
+# secretsEncryption:
+#  keyARN:
+# ---------------------------------
+# git:
+# repo:
+#    url:
+#    branch:
+#    paths:
+#    fluxPath:
+#    user:
+#    email:
+#    privateSSHKeyPath:
+#  operator:
+#    commitOperatorManifests:
+#    label:
+#    namespace:
+#    withHelm:
+#    readOnly:
+#    additionalFluxArgs:
+#    additionalHelmOperatorArgs:
+#  bootstrapProfile:
+#    source:
+#    revision:
+#    outputPath:
+# ---------------------------------
+# gitops:
+#  flux:
+#    gitProvider:
+#    flags:
