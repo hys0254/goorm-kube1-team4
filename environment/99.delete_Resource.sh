@@ -33,3 +33,8 @@ echo ' Delete ALB Resource Finished '
 
 echo '>>>> Delete Resources Finished '
 
+# 단계 3 - CSI, ALB 관련 폴더 삭제
+echo '> Step 3 : Delete Download Resources associated with CSI, ALB <'
+rm -rf CSI
+rm -rf ALB
+
