@@ -18,7 +18,7 @@ echo ''
 
 # 단계1 : AWS 로드밸런서 컨트롤러 IAM 정책 다운로드
 echo '> Step1 : Download AWSLoadBalancerControllerIAMPolicy  '
-mkdir ALB
+mkdir -p ALB
 curl -o ALB/iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy.json
 echo ''
 

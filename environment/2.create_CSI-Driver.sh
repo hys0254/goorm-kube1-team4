@@ -17,7 +17,7 @@ echo ''
 
 # 단계1 : CSI 컨트롤러 IAM 정책 다운로드
 echo '> Step1 : Download CSIControllerIAMPolicy  '
-mkdir CSI
+mkdir -p CSI
 curl -o CSI/example-iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.0.0/docs/example-iam-policy.json
 echo ''
 
