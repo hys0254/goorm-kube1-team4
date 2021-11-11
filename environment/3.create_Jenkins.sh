@@ -168,9 +168,10 @@ controller:
   serviceType: LoadBalancer
   serviceExternalTrafficPolicy:
   serviceAnnotations: {}
+  jenkinsUriPrefix: "/jenkins"
   ingress:
     enabled: true
-    paths: []
+    paths: "/jenkins"
     apiVersion: networking.k8s.io/v1
     labels: {}
     annotations:
