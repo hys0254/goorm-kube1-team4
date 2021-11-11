@@ -35,7 +35,7 @@ echo ''
 
 # 단계3 : 기존 OIDC 공급자 생성 여부 확인 -> aws-load-balancer 공급자와 공급자를 통한 ALB 컨트롤러 생성.
 echo '>>> Step3 : Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy  '
-OIDCisuser=`aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text`
+OIDCisuser=`aws eks describe-cluster --name ${CLUSTER_NAME} --query "cluster.identity.oidc.issuer" --output text`
 OIDCProvider=${OIDCisuser:49}
 echo 'OIDCisuser : '${OIDCisuser}
 echo 'OIDCProvider : '${OIDCProvider}
@@ -52,6 +52,8 @@ else
   echo 'Create iamserviceaccount with AWSLoadBalancerControllerIAMPolicy success'
 fi
 echo ''
+
+sleep 10
 
 # 단계4 : 단계4 중 a, b 두 단계의 kubernets용 수신 컨트롤러 설치 제거는 건너뜀. 구성하지 않을 것 같아서..! 우선은 패스 | 하단에는 c 단계3에서 생성한 IAM 역할에 정책 추가 부분만 넣음.
 # 단계4-c-1 : IAM 정책 다운로드
@@ -76,6 +78,7 @@ ALBRoleName=`aws cloudformation describe-stacks --stack-name ${ALBCloudStackName
 aws iam attach-role-policy --role-name ${ALBRoleName} --policy-arn arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerAdditionalIAMPolicy
 echo ''
 
+sleep 10
 
 # 단계5 :  Kubernetes 매니페스트를 적용하여 AWS 로드 밸런서 컨트롤러를 설치
 # 단계5-a : cert-manager를 설치하여 인증서 구성 Webhook에 주입.(Webhook주입이 무엇인지는 알아보는 중..)
@@ -83,6 +86,10 @@ echo '>>>>> Step5 : Install AWS Load Balancer Controller... '
 echo '>>> Install cert-manager '
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
 echo ''
+
+echo 'Wating for Apply cert-manager.yaml...... after 10s Install ALB Process continue'
+sleep 10
+
 # 단계5-b-1 : 컨트롤러 사양 다운로드
 echo '>>> Download Controller Spec '
 curl -o ALB/v2_2_0_full.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/v2_2_0_full.yaml
@@ -110,66 +117,3 @@ echo ''
 echo '===================== ALB Controller creation Success ====================='
 echo "if you want to check aws-load-balancer-controller run well, type command'  kubectl get deployment -n kube-system aws-load-balancer-controller  ' "
 echo ''
-#ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 기존 Ingress Controller#
-#echo ''
-#echo '>>> Check if ALB-Ingress-Controller Installed  '
-#if [ `kubectl get deployment -n kube-system alb-ingress-controller` ]
-#then
-# `curl -o iam_policy_v1_to_v2_additional.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy_v1_to_v2_additional.json`
-# `aws iam create-policy \
-#    --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy \
-#    --policy-document file://iam_policy_v1_to_v2_additional.json`
-#else
-# `kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.8/docs/examples/alb-ingress-controller.yaml`
-# `kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.8/docs/examples/rbac-role.yaml`
-#fi
-#
-#
-#NG_ROLE=`kubectl -n kube-system describe configmap aws-auth | grep rolearn`
-#ACCOUNT=${NG_ROLE:24:12}
-#WN_ROLE=${NG_ROLE:42}
-#echo "ACCOUNT          : $ACCOUNT"
-#echo "WORKER NODE ROLE : $WN_ROLE"
-#echo "NODE GROUP ROLE  : $NG_ROLE"
-#aws iam attach-role-policy \
-#--policy-arn arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy \
-#--role-name ${WN_ROLE}
-#
-#
-#echo ''
-#echo '>>> Create AWSLoadBalancerControllerIAMPolicy To WorkerNode Role'
-#NG_ROLE=`kubectl -n kube-system describe configmap aws-auth | grep rolearn`
-#ACCOUNT=${NG_ROLE:24:12}
-#WN_ROLE=${NG_ROLE:42}
-#echo "ACCOUNT          : $ACCOUNT"
-#echo "WORKER NODE ROLE : $WN_ROLE"
-#echo "NODE GROUP ROLE  : $NG_ROLE"
-#aws iam attach-role-policy \
-#--policy-arn arn:aws:iam::${ACCOUNT}:policy/AWSLoadBalancerControllerIAMPolicy \
-#--role-name ${WN_ROLE}
-#echo ''
-#echo '>>> Create ClusterRole for ALB Ingress Controller'
-#kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.3/docs/examples/rbac-role.yaml
-#echo ''
-#echo '>>> Create ALB Ingress Controller'
-#CLUSTER_NAME='t4ClusterEKS' # 클러스터명
-#AWS_REGION='ap-northeast-2' # 클러스터 리젼
-#VPC_ID=`eksctl get cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} --output json | jq -r '.[0].ResourcesVpcConfig.VpcId'`
-#echo "CLUSTER NAME : $CLUSTER_NAME"
-#echo "VPC ID       : $VPC_ID"
-#echo "AWS REGION   : $AWS_REGION"
-#echo ''
-#echo '>>> Remove Old alb-ingress-controller.yaml file && New alb-ingress-controller.yaml file Download'
-#rm -rf alb-ingress-controller.yaml* &&
-#curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.3/docs/examples/alb-ingress-controller.yaml &&
-## alb-ingress-controller.yaml
-#sed -i -e "s/# - --cluster-name=devCluster/- --cluster-name=$CLUSTER_NAME/g" alb-ingress-controller.yaml &&
-#sed -i -e "s/# - --aws-vpc-id=vpc-xxxxxx/- --aws-vpc-id=$VPC_ID/g" alb-ingress-controller.yaml &&
-#sed -i -e "s/# - --aws-region=us-west-1/- --aws-region=$AWS_REGION/g" alb-ingress-controller.yaml &&
-#kubectl apply -f ./alb-ingress-controller.yaml
-#echo '>>> FINISH'
-#sleep 5
-#echo '>>> Checking Create ALB Ingress Controller'
-#kubectl get pods -n kube-system | grep alb
-#echo ''
-#echo '====== Connect POLICY-EKS-IAM with Ingress Controller ======'
