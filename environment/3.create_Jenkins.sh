@@ -170,7 +170,7 @@ controller:
   serviceAnnotations: {}
   ingress:
     enabled: true
-    paths: []
+    paths: 
     apiVersion: networking.k8s.io/v1
     labels: {}
     annotations:
@@ -233,7 +233,7 @@ controller:
   agentListenerLoadBalancerIP:
   agentListenerServiceAnnotations: {}
   loadBalancerSourceRanges:
-  - 0.0.0.0/0
+    - 0.0.0.0/0
   extraPorts: []
   installPlugins:
     - kubernetes:1.30.1
