@@ -38,6 +38,8 @@ EOF
 # jenkins-pvc.yaml 실행
 kubectl apply -f Jenkins/jenkins-pvc.yaml
 
+sleep 5
+
 #####  jenkins serviceAccount 생성 -> jenkins pod가 API 서버와 상호작용 할 수 있도록 생성
 cat > Jenkins/jenkins-sa.yaml <<EOF
 ---
@@ -121,12 +123,13 @@ EOF
 # jenkins-sa.yaml 실행
 kubectl apply -f Jenkins/jenkins-sa.yaml
 
+sleep 5
+
 ###### jenkins-values.yaml 생성
 cat > Jenkins/jenkins-values.yaml <<EOF
+---
 clusterZone: "cluster.local"
-
 renderHelmLabels: true
-
 controller:
   componentName: "jenkins-controller"
   image: "jenkins/jenkins"
@@ -134,14 +137,12 @@ controller:
   imagePullPolicy: "Always"
   imagePullSecretName:
   lifecycle:
-
   disableRememberMe: false
   numExecutors: 0
   executorMode: "NORMAL"
   markupFormatter: plainText
   customJenkinsLabels: []
   adminSecret: true
-
   hostNetworking: false
   adminUser: "admin"
   admin:
@@ -162,14 +163,30 @@ controller:
   runAsUser: 1000
   fsGroup: 1000
   securityContextCapabilities: {}
-  servicePort: 80
+  servicePort: 8080
   targetPort: 8080
   serviceType: LoadBalancer
   serviceExternalTrafficPolicy:
-  serviceAnnotations:
-      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-      service.beta.kubernetes.io/aws-load-balancer-subnets: 
-
+  serviceAnnotations: {}
+  ingress:
+    enabled: true
+    paths: []
+    apiVersion: networking.k8s.io/v1
+    labels: {}
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+    hostName:
+    tls:
+  secondaryingress:
+    enabled: false
+    paths: []
+    apiVersion: extensions/v1beta1
+    labels: {}
+    annotations: {}
+    hostName:
+    tls:
   statefulSetLabels: {}
   serviceLabels: {}
   podLabels: {}
@@ -196,13 +213,11 @@ controller:
         port: http
       periodSeconds: 10
       timeoutSeconds: 5
-
   podDisruptionBudget:
     enabled: false
     apiVersion: "policy/v1beta1"
     annotations: {}
     labels: {}
-
   agentListenerEnabled: true
   agentListenerPort: 50000
   agentListenerHostPort:
@@ -217,39 +232,26 @@ controller:
   agentListenerServiceType: "ClusterIP"
   agentListenerLoadBalancerIP:
   agentListenerServiceAnnotations: {}
-
   loadBalancerSourceRanges:
   - 0.0.0.0/0
   extraPorts: []
-
   installPlugins:
     - kubernetes:1.30.1
     - workflow-aggregator:2.6
     - git:4.9.0
     - configuration-as-code:1.53
-
   installLatestPlugins: true
-
   installLatestSpecifiedPlugins: false
-
   additionalPlugins: []
-
   initializeOnce: false
-
   overwritePluginsFromImage: true
-
   enableRawHtmlMarkupFormatter: false
   scriptApproval: []
   initScripts: []
-
   additionalExistingSecrets: []
-
   additionalSecrets: []
-
   secretClaims: []
-
   cloudName: "kubernetes"
-
   JCasC:
     defaultConfig: true
     configScripts: {}
@@ -265,7 +267,6 @@ controller:
       loggedInUsersCanDoAnything:
         allowAnonymousRead: false
   customInitContainers: []
-
   sidecars:
     configAutoReload:
       enabled: true
@@ -274,44 +275,18 @@ controller:
       resources: {}
       reqRetryConnect: 10
       sshTcpPort: 1044
-
     other: []
-  schedulerName: ""
+  schedulerName: ''
   nodeSelector: {}
-
   terminationGracePeriodSeconds:
-
   terminationMessagePath:
   terminationMessagePolicy:
-
   tolerations: []
-
   affinity: {}
   priorityClassName:
-
   podAnnotations: {}
   statefulSetAnnotations: {}
-
   updateStrategy: {}
-
-  ingress:
-    enabled: false
-    paths: []
-    apiVersion: "extensions/v1beta1"
-    labels: {}
-    annotations: {}
-    hostName:
-    tls:
-
-  secondaryingress:
-    enabled: false
-    paths: []
-    apiVersion: "extensions/v1beta1"
-    labels: {}
-    annotations: {}
-    hostName:
-    tls:
-
   backendconfig:
     enabled: false
     apiVersion: "extensions/v1beta1"
@@ -319,14 +294,11 @@ controller:
     labels: {}
     annotations: {}
     spec: {}
-
   route:
     enabled: false
     labels: {}
     annotations: {}
-
   hostAliases: []
-
   prometheus:
     enabled: false
     serviceMonitorAdditionalLabels: {}
@@ -334,10 +306,8 @@ controller:
     scrapeEndpoint: /prometheus
     alertingRulesAdditionalLabels: {}
     alertingrules: []
-    prometheusRuleNamespace: ""
-
+    prometheusRuleNamespace: ''
   testEnabled: true
-
   httpsKeyStore:
     jenkinsHttpsJksSecretName: ''
     enable: false
@@ -386,10 +356,9 @@ controller:
         /MwpRxxazoda9r45kqQpyG+XoM4pB+Fd3JzMc4FUGxfVPxJU4jLawnJJiZ3vqiSyaB0YyUL+Er1Q
         6NnqtR4gEBF0ZVlQmkycFvD4EC2boP943dLqNUvop+4R3SM1QMM6P5u8iTXtHd/VN4MwMyy1wtog
         hYAzODo1Jt59pcqqKJEas0C/lFJEB3frw4ImNx5fNlJYOpx+ijfQs9m39CevDq0=
-
 agent:
   enabled: true
-  defaultsProviderTemplate: ""
+  defaultsProviderTemplate: ''
   jenkinsUrl:
   jenkinsTunnel:
   kubernetesConnectTimeout: 5
@@ -418,11 +387,9 @@ agent:
   podRetention: "Never"
   showRawYaml: true
   volumes: []
-
   workspaceVolume: {}
   envVars: []
   nodeSelector: {}
-
   command:
   args: "\${computer.jnlpmac} \${computer.name}"
   sideContainerName: "jnlp"
@@ -430,27 +397,22 @@ agent:
   containerCap: 10
   podName: "default"
   idleMinutes: 0
-  yamlTemplate: ""
+  yamlTemplate: ''
   yamlMergeStrategy: "override"
   connectTimeout: 100
   annotations: {}
-
   podTemplates: {}
-
-
 additionalAgents: {}
-
 persistence:
   enabled: true
   existingClaim: jenkins-pvc
   storageClass: jenkins-sc
   annotations: {}
   labels: {}
-  accessMode: "ReadWriteOnce"
+  accessMode: "ReadWriteMany"
   size: "8Gi"
   volumes:
   mounts:
-
 networkPolicy:
   enabled: false
   apiVersion: networking.k8s.io/v1
@@ -459,24 +421,19 @@ networkPolicy:
     podLabels: {}
     namespaceLabels: {}
   externalAgents: {}
-
 rbac:
   create: true
   readSecrets: false
-
 serviceAccount:
   create: false
   name: jenkins
   annotations: {}
   imagePullSecretName:
-
-
 serviceAccountAgent:
   create: false
   name: jenkins
   annotations: {}
   imagePullSecretName:
-
 backup:
   enabled: false
   componentName: "backup"
@@ -486,7 +443,7 @@ backup:
     create: true
     name:
     annotations: {}
-  activeDeadlineSeconds: ""
+  activeDeadlineSeconds: ''
   image:
     repository: "maorfr/kube-tasks"
     tag: "0.2.0"
@@ -507,11 +464,10 @@ backup:
   fsGroup: 1000
   securityContextCapabilities: {}
 checkDeprecation: true
-
 awsSecurityGroupPolicies:
   enabled: false
   policies:
-    - name: ""
+    - name: ''
       securityGroupIds: []
       podSelector: {}
 EOF
