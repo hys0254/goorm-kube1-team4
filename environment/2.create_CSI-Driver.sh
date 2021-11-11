@@ -72,3 +72,45 @@ echo ''
 # 단계 6 : EBS CSI Driver 실행
 echo '>>>>> Step 6 : Run aws-ebs-csi-driver '
 kubectl apply -k CSI/aws-ebs-csi-driver/deploy/kubernetes/base
+
+
+################################# EFS 파일 시스템 생성 스크립트 시작
+
+# 단계 1 : EFS 생성용 보안그룹 생성
+CIDR_RANGE=`aws ec2 describe-vpcs --vpc-ids ${VPC_ID} --query "Vpcs[].CidrBlock" --output text`
+SG_ID=`aws ec2 create-security-group --group-name MyEfsSecurityGroup --description "EFS security group EKClusterS" --vpc-id ${VPC_ID} --tag --output text`
+
+echo '>>> Print Var for EFS'
+echo 'CIDR_RANGE : '${CIDR_RANGE}
+echo 'SG_ID : '${SG_ID}
+
+aws ec2 authorize-security-group-ingress --group-id ${SG_ID} --protocol tcp --port 2049 --cidr ${CIDR_RANGE} | grep SecurityGroupRuleId
+
+FS_ID=`aws efs create-file-system --region ${AWS_REGION} --performance-mode generalPurpose --query 'FileSystemId' --output text | grep fs`
+
+## 단계 2 : 파일시스템 생성용 반복문
+TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' --output json | jq 'length'`
+
+echo 'TEMPNUM : '${TEMPNUM}
+
+for ((i=0; i<${TEMPNUM}; i++)); do
+subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' --output json | jq -r ".[${i}].SubnetId"`
+avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' --output json | jq -r ".[${i}].AvailabilityZone"`
+echo ${subnetId}' - '${avZone}
+#aws efs create-mount-target --file-system-id ${FS_ID} --subnet-id ${subnetId} --security-groups ${SG_ID}
+`aws efs create-mount-target \
+              --file-system-id ${FS_ID} \
+              --subnet-id ${subnetId} \
+              --security-groups ${SG_ID} | grep "LifeCycleState"` 
+sleep 2
+done
+## 파일시스템 생성용 반복문 끝
+
+
+#/bin/bash
+
+## 단계 3 : StorageClass, PVC 배포
+echo '>>> Download storageclass.yaml & Edit <<<'
+curl -o CSI/storageclass.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/examples/kubernetes/dynamic_provisioning/specs/storageclass.yaml
+sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" CSI/storageclass.yaml
+cat CSI/storageclass.yaml
