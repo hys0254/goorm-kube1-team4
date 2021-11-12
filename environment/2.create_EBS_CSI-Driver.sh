@@ -17,8 +17,8 @@ echo ''
 
 # 단계1 : CSI 컨트롤러 IAM 정책 다운로드
 echo '> Step1 : Download CSIControllerIAMPolicy  '
-mkdir -p CSI
-curl -o CSI/example-iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.0.0/docs/example-iam-policy.json
+mkdir -p CSI/EBS
+curl -o CSI/EBS/example-iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/v1.0.0/docs/example-iam-policy.json
 echo ''
 
 # 단계2 : 단계1에서 다운로드한 정책으로 IAM 정책 만듦. - 기존에 만들어진 정책이 존재할 시, 단계 스킵하도록 if문 구성
@@ -28,7 +28,7 @@ if [ "`aws iam list-policies | grep AmazonEKS_EBS_CSI_Driver_Policy`" ]
 then
   echo '>> AmazonEKS_EBS_CSI_Driver_Policy was installed continue next step '
 else
-  aws iam create-policy --policy-name AmazonEKS_EBS_CSI_Driver_Policy --policy-document file://CSI/example-iam-policy.json | grep AmazonEKS_EBS_CSI_Driver_Policy
+  aws iam create-policy --policy-name AmazonEKS_EBS_CSI_Driver_Policy --policy-document file://CSI/EBS/example-iam-policy.json | grep AmazonEKS_EBS_CSI_Driver_Policy
 fi
 echo ''
 
@@ -61,62 +61,14 @@ echo ''
 
 # 단계 5 : EBS CSI Driver 배포용 git clone 및 정보 수정
 echo '>>>>> Step 5 : Cloning & Edit aws-ebs-csi-driver '
-git clone https://github.com/kubernetes-sigs/aws-ebs-csi-driver.git CSI/aws-ebs-csi-driver
-echo '  annotations:' >> CSI/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
-echo '    eks.amazonaws.com/role-arn: '${CSIRoleName} >> CSI/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
-cat CSI/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+git clone https://github.com/kubernetes-sigs/aws-ebs-csi-driver.git CSI/EBS/aws-ebs-csi-driver
+echo '  annotations:' >> CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+echo '    eks.amazonaws.com/role-arn: '${CSIRoleName} >> CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+cat CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
 echo ''
 echo 'Edit serviceaccount-csi-controller.yaml Finish'
 echo ''
 
 # 단계 6 : EBS CSI Driver 실행
 echo '>>>>> Step 6 : Run aws-ebs-csi-driver '
-kubectl apply -k CSI/aws-ebs-csi-driver/deploy/kubernetes/base
-
-
-################################# EFS 파일 시스템 생성 스크립트 시작
-
-# 단계 1 : EFS 생성용 보안그룹 생성
-CIDR_RANGE=`aws ec2 describe-vpcs --vpc-ids ${VPC_ID} --query "Vpcs[].CidrBlock" --output text`
-SG_ID=`aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${VPC_ID}" | jq '.[][] | select(.GroupName=="MyEfsSecurityGroup")' | jq -r '.GroupId'`
-if [[ -z ${SG_ID} ]]
-then
-SG_ID=`aws ec2 create-security-group --group-name MyEfsSecurityGroup --description "EFS security group EKClusterS" --vpc-id ${VPC_ID} --tag --output text`
-  echo 'Create Security-group... Name = MyEfsSecurityGroup'
-else
-  echo 'Using existing Security-group for Making EFS'
-fi
-
-echo '>>> Print Var for EFS'
-echo 'CIDR_RANGE : '${CIDR_RANGE}
-echo 'SG_ID : '${SG_ID}
-
-aws ec2 authorize-security-group-ingress --group-id ${SG_ID} --protocol tcp --port 2049 --cidr ${CIDR_RANGE} | grep SecurityGroupRuleId
-
-FS_ID=`aws efs create-file-system --region ${AWS_REGION} --performance-mode generalPurpose --query 'FileSystemId' --output text | grep fs`
-
-## 단계 2 : 파일시스템 생성용 반복문
-TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq '.[] | select(.MapPublicIpOnLaunch==false)' | grep SubnetId | wc -l`
-
-echo 'TEMPNUM : '${TEMPNUM}
-
-for ((i=0; i<${TEMPNUM}; i++)); do
-subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .SubnetId"`
-avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .AvailabilityZone"`
-echo ${subnetId}' - '${avZone}
-#aws efs create-mount-target --file-system-id ${FS_ID} --subnet-id ${subnetId} --security-groups ${SG_ID}
-`aws efs create-mount-target \
-              --file-system-id ${FS_ID} \
-              --subnet-id ${subnetId} \
-              --security-groups ${SG_ID} > mount_target_${subnetId}.txt` 
-sleep 2
-done
-## 파일시스템 생성용 반복문 끝
-
-## 단계 3 : StorageClass, PVC 배포
-echo '>>> Download storageclass.yaml & Edit <<<'
-curl -o CSI/storageclass.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/examples/kubernetes/dynamic_provisioning/specs/storageclass.yaml
-sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" CSI/storageclass.yaml
-cat CSI/storageclass.yaml
-
-kubectl apply -f CSI/storageclass.yaml
+kubectl apply -k CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base
