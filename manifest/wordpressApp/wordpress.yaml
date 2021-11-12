@@ -38,4 +38,4 @@ spec:
             claimName: wordpress-pvc
             
       nodeSelector:
-        alpha.eksctl.io/nodegroup-name: ng-private
+        alpha.eksctl.io/nodegroup-name: dbNode
