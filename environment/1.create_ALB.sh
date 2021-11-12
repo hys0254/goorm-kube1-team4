@@ -87,8 +87,8 @@ echo '>>> Install cert-manager '
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
 echo ''
 
-echo 'Wating for Apply cert-manager.yaml...... after 3s Install ALB Process continue'
-sleep 3
+echo 'Wating for Apply cert-manager.yaml...... after 30s Install ALB Process continue'
+sleep 30
 
 # 단계5-b-1 : 컨트롤러 사양 다운로드
 echo '>>> Download Controller Spec '
@@ -113,9 +113,13 @@ sed -i '545,553d' ALB/v2_2_0_full.yaml
 echo '>>> apply v2_2_0_full.yaml '
 kubectl apply -f ALB/v2_2_0_full.yaml
 echo ''
-echo '>>> reapply v2_2_0_full.yaml for validating webhook cert error'
-kubectl delete -f ALB/v2_2_0_full.yaml
-echo ''
+#echo '>>> reapply v2_2_0_full.yaml for validating webhook cert error'
+#kubectl delete -f ALB/v2_2_0_full.yaml
+#echo ''
+#kubectl delete -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
+
+#kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
+
 kubectl apply -f ALB/v2_2_0_full.yaml
 echo ''
 
