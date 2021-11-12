@@ -98,7 +98,7 @@ echo ${subnetId}' - '${avZone}
 `aws efs create-mount-target \
               --file-system-id ${FS_ID} \
               --subnet-id ${subnetId} \
-              --security-groups ${SG_ID} > mount_target_${subnetId}.txt`
+              --security-groups ${SG_ID} > CSI/EFS/mount_target_${subnetId}.txt`
 sleep 2
 done
 ## 파일시스템 생성용 반복문 끝
