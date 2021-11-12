@@ -101,7 +101,7 @@ echo ${subnetId}' - '${avZone}
 `aws efs create-mount-target \
               --file-system-id ${FS_ID} \
               --subnet-id ${subnetId} \
-              --security-groups ${SG_ID} | grep "LifeCycleState"` 
+              --security-groups ${SG_ID} | grep LifeCycleState` 
 sleep 2
 done
 ## 파일시스템 생성용 반복문 끝
