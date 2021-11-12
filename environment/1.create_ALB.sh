@@ -88,7 +88,10 @@ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/relea
 echo ''
 
 echo 'Wating for Apply cert-manager.yaml...... after 10s Install ALB Process continue'
-sleep 10
+sleep 5
+kubectl delete -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
+sleep 5
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
 
 # 단계5-b-1 : 컨트롤러 사양 다운로드
 echo '>>> Download Controller Spec '
