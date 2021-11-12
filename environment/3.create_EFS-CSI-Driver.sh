@@ -83,13 +83,16 @@ aws ec2 authorize-security-group-ingress --group-id ${SG_ID} --protocol tcp --po
 FS_ID=`aws efs create-file-system --region ${AWS_REGION} --performance-mode generalPurpose --query 'FileSystemId' --output text | grep fs`
 
 ## 단계 6 : 파일시스템 생성용 반복문
-TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq '.[] | select(.MapPublicIpOnLaunch==false)' | grep SubnetId | wc -l`
+# TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq '.[] | select(.MapPublicIpOnLaunch==false)' | grep SubnetId | wc -l`
+TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r "[.[] | select(.MapPublicIpOnLaunch==false)] | length"`
 
 echo 'TEMPNUM : '${TEMPNUM}
 
 for ((i=0; i<${TEMPNUM}; i++)); do
-subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .SubnetId"`
-avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .AvailabilityZone"`
+# subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .SubnetId"`
+subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r "[.[] | select(.MapPublicIpOnLaunch==false)] | .[${i}].SubnetId"`
+# avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .AvailabilityZone"`
+avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r "[.[] | select(.MapPublicIpOnLaunch==false)] | .[${i}].AvailabilityZone"`
 echo ${subnetId}' - '${avZone}
 #aws efs create-mount-target --file-system-id ${FS_ID} --subnet-id ${subnetId} --security-groups ${SG_ID}
 `aws efs create-mount-target \
