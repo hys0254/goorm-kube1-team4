@@ -78,7 +78,14 @@ kubectl apply -k CSI/aws-ebs-csi-driver/deploy/kubernetes/base
 
 # 단계 1 : EFS 생성용 보안그룹 생성
 CIDR_RANGE=`aws ec2 describe-vpcs --vpc-ids ${VPC_ID} --query "Vpcs[].CidrBlock" --output text`
+SG_ID=`aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${VPC_ID}" | jq '.[][] | select(.GroupName=="MyEfsSecurityGroup")' | jq -r '.GroupId'`
+if [[ -z ${SG_ID} ]]
+then
 SG_ID=`aws ec2 create-security-group --group-name MyEfsSecurityGroup --description "EFS security group EKClusterS" --vpc-id ${VPC_ID} --tag --output text`
+  echo 'Create Security-group... Name = MyEfsSecurityGroup'
+else
+  echo 'Using existing Security-group for Making EFS'
+fi
 
 echo '>>> Print Var for EFS'
 echo 'CIDR_RANGE : '${CIDR_RANGE}
@@ -89,25 +96,22 @@ aws ec2 authorize-security-group-ingress --group-id ${SG_ID} --protocol tcp --po
 FS_ID=`aws efs create-file-system --region ${AWS_REGION} --performance-mode generalPurpose --query 'FileSystemId' --output text | grep fs`
 
 ## 단계 2 : 파일시스템 생성용 반복문
-TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' --output json | jq 'length'`
+TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq '.[] | select(.MapPublicIpOnLaunch==false)' | grep SubnetId | wc -l`
 
 echo 'TEMPNUM : '${TEMPNUM}
 
 for ((i=0; i<${TEMPNUM}; i++)); do
-subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' --output json | jq -r ".[${i}].SubnetId"`
-avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' --output json | jq -r ".[${i}].AvailabilityZone"`
+subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .SubnetId"`
+avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .AvailabilityZone"`
 echo ${subnetId}' - '${avZone}
 #aws efs create-mount-target --file-system-id ${FS_ID} --subnet-id ${subnetId} --security-groups ${SG_ID}
 `aws efs create-mount-target \
               --file-system-id ${FS_ID} \
               --subnet-id ${subnetId} \
-              --security-groups ${SG_ID} | grep LifeCycleState` 
+              --security-groups ${SG_ID} > mount_target_${subnetId}.txt` 
 sleep 2
 done
 ## 파일시스템 생성용 반복문 끝
-
-
-#/bin/bash
 
 ## 단계 3 : StorageClass, PVC 배포
 echo '>>> Download storageclass.yaml & Edit <<<'
