@@ -113,15 +113,6 @@ sed -i '545,553d' ALB/v2_2_0_full.yaml
 echo '>>> apply v2_2_0_full.yaml '
 kubectl apply -f ALB/v2_2_0_full.yaml
 echo ''
-#echo '>>> reapply v2_2_0_full.yaml for validating webhook cert error'
-#kubectl delete -f ALB/v2_2_0_full.yaml
-#echo ''
-#kubectl delete -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
-
-#kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.1.1/cert-manager.yaml
-
-kubectl apply -f ALB/v2_2_0_full.yaml
-echo ''
 
 echo '===================== ALB Controller creation Success ====================='
 echo "if you want to check aws-load-balancer-controller run well, type command'  kubectl get deployment -n kube-system aws-load-balancer-controller  ' "
