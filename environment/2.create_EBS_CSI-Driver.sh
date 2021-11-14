@@ -62,8 +62,20 @@ echo ''
 # 단계 5 : EBS CSI Driver 배포용 git clone 및 정보 수정
 echo '>>>>> Step 5 : Cloning & Edit aws-ebs-csi-driver '
 git clone https://github.com/kubernetes-sigs/aws-ebs-csi-driver.git CSI/EBS/aws-ebs-csi-driver
-echo '  annotations:' >> CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
-echo '    eks.amazonaws.com/role-arn: '${CSIRoleName} >> CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+
+# ebs-csi-driver 수정
+if [ grep ${CSIRoleName} CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml ]
+then
+  echo 'Your role-arn already exist in serviceaccount-csi-controller.yaml.. Continue Process!'
+else
+  echo 'Edit seerviceaccount-csi-controller.yaml role-arn'
+  #sed -i -r -e "/#  eks.amazonaws.com\/role-arn/a\  annotations:\n    eks.amazonaws.com/role-arn: ${CSIRoleName}" CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+  sed -i 's/#annotations:/annotations:/g' CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+  sed -i '/#  eks.amazonaws/d' CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+  sed -i -r -e "/annotations/a\    eks.amazonaws.com/role-arn: ${CSIRoleName}" CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+fi
+# echo '  annotations:' >> CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
+# echo '    eks.amazonaws.com/role-arn: '${CSIRoleName} >> CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
 cat CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml
 echo ''
 echo 'Edit serviceaccount-csi-controller.yaml Finish'
