@@ -64,7 +64,7 @@ echo '>>>>> Step 5 : Cloning & Edit aws-ebs-csi-driver '
 git clone https://github.com/kubernetes-sigs/aws-ebs-csi-driver.git CSI/EBS/aws-ebs-csi-driver
 
 # ebs-csi-driver 수정
-if [ grep ${CSIRoleName} CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml ]
+if [ grep "${CSIRoleName}" CSI/EBS/aws-ebs-csi-driver/deploy/kubernetes/base/serviceaccount-csi-controller.yaml ]
 then
   echo 'Your role-arn already exist in serviceaccount-csi-controller.yaml.. Continue Process!'
 else

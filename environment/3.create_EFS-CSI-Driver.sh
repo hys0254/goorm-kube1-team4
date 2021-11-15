@@ -36,16 +36,6 @@ fi
 echo ''
 
 # 단계 3 : EFS에 마운트 및 연결 설정 권한(위에 설정한 iam-policy-example.json으로 만든 AmazonEKS_EFS_CSI_Driver_Policy)를 인스턴스 Role에 연결.
-  # 인스턴스 개수에 따라 인스턴스마다 AmazonEKS_EFS_CSI_Driver_Policy 정책 연결
-  # 정책을 중복 연결하는 것은 오류가 발생하지 않아 중복체크하는 로직은 주석처리
-  # aws iam list-attached-role-policies --role-name eksctl-t4ClusterEKS-nodegroup-dbN-NodeInstanceRole-1LQL42994HOQA | jq -r '.AttachedPolicies[].PolicyName' | grep AmazonEKS_EFS_CSI_Driver_Policy
-INS_NUM=`aws iam list-roles | jq '.[][].RoleName' | grep NodeInstanceRole | wc -l`
-for ((i=1; i<=${INS_NUM}; i++)); do
-INS_ROLENAME=`aws iam list-roles | jq -r '.[][].RoleName' | grep eksctl | sed -n ${i}p`
-aws iam attach-role-policy \
- --role-name ${INS_ROLENAME} \
- --policy-arn arn:aws:iam::${ACCOUNT}:policy/AmazonEKS_EFS_CSI_Driver_Policy
-done
 
 # 단계3-1 : 기존 OIDC 공급자 여부 확인 및 없을 시 생성. -> 공식 가이드문서 상의 AWS CLI탭의 trust_policy.json 형식으로 변경
 echo '>>> Step3 : Check AmazonEKS_EBS_CSI_Driver_Policy associate with OIDCProvider '
@@ -96,6 +86,19 @@ metadata:
 EOF
 
 kubectl apply -f CSI/EFS/efs-service-account.yaml
+
+  # 인스턴스 개수에 따라 인스턴스마다 AmazonEKS_EFS_CSI_Driver_Policy 정책 연결
+  # 정책을 중복 연결하는 것은 오류가 발생하지 않아 중복체크하는 로직은 주석처리
+  # aws iam list-attached-role-policies --role-name eksctl-t4ClusterEKS-nodegroup-dbN-NodeInstanceRole-1LQL42994HOQA | jq -r '.AttachedPolicies[].PolicyName' | grep AmazonEKS_EFS_CSI_Driver_Policy
+INS_NUM=`aws iam list-roles | jq '.[][].RoleName' | grep NodeInstanceRole | wc -l`
+for ((i=1; i<=${INS_NUM}; i++)); do
+INS_ROLENAME=`aws iam list-roles | jq -r '.[][].RoleName' | grep nodegroup | sed -n ${i}p`
+aws iam attach-role-policy \
+ --role-name ${INS_ROLENAME} \
+ --policy-arn arn:aws:iam::${ACCOUNT}:policy/AmazonEKS_EFS_CSI_Driver_Policy
+
+echo ''
+done
 
 #if [ "`aws iam list-open-id-connect-providers | grep ${OIDCProvider}`" ]
 #then
