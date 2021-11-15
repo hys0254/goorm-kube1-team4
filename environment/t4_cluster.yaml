@@ -33,9 +33,9 @@ vpc:
 #  - "ap-northeast-2b"
  
 managedNodeGroups:
-  - name: dbNode
+  - name: DBNode
     instanceType: t2.large
-    instanceName: "dbIns"
+    instanceName: "DBInstance"
     minSize: 2
     desiredCapacity: 2
     maxSize: 3
@@ -56,6 +56,50 @@ managedNodeGroups:
         certManager: true
         albIngress: true
         cloudWatch: true
+
+  - name: WPNode
+    instanceType: t2.large
+    instanceName: "WPInstance"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    volumeSize: 10
+    privateNetworking: true
+    ssh: 
+      allow: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+    iam: 
+      withAddonPolicies: 
+        imageBuilder: true
+        autoScaler: true
+        ebs: true
+        efs: true
+        externalDNS: true
+        certManager: true
+
+  - name: JenkinsNode
+    instanceType: t2.large
+    instanceName: "JenkinsInstance"
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 3
+    volumeSize: 10
+    privateNetworking: true
+    ssh: 
+      allow: true
+    availabilityZones: 
+      - "ap-northeast-2a"
+      - "ap-northeast-2c"
+    iam: 
+      withAddonPolicies: 
+        imageBuilder: true
+        autoScaler: true
+        ebs: true
+        efs: true
+        externalDNS: true
+        certManager: true
 
 cloudWatch: 
   clusterLogging: 
