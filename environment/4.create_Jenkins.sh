@@ -165,9 +165,9 @@ controller:
   securityContextCapabilities: {}
   servicePort: 8080
   targetPort: 8080
-  serviceType: LoadBalancer
+  serviceType: "NodePort"
   serviceExternalTrafficPolicy:
-  serviceAnnotations: {}
+  serviceAnnotations: {}  
   ingress:
     enabled: true
     paths: 
@@ -229,9 +229,11 @@ controller:
     defaultCrumbIssuer:
       enabled: true
       proxyCompatability: true
-  agentListenerServiceType: "ClusterIP"
+  agentListenerServiceType: "NodePort"
   agentListenerLoadBalancerIP:
   agentListenerServiceAnnotations: {}
+#    service.beta.kubernetes.io/aws-load-balancer-internal: "True"
+#    service.beta.kubernetes.io/load-balancer-source-ranges: "172.0.0.0/8, 10.0.0.0/8"
   loadBalancerSourceRanges:
     - 0.0.0.0/0
   extraPorts: []
