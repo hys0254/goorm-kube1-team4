@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-alb
+  labels:
+    app.kubernetes.io/name: external-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/subnets: subnet-00f4fcf1f7933f8e1,subnet-06a72e2ead60c37c5
+    alb.ingress.kubernetes.io/target-type: instance
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: webserver
+              servicePort: 80
