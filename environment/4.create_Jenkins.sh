@@ -279,7 +279,8 @@ controller:
       sshTcpPort: 1044
     other: []
   schedulerName: ''
-  nodeSelector: {}
+  nodeSelector: 
+    alpha.eksctl.io/nodegroup-name: JenkinsNode
   terminationGracePeriodSeconds:
   terminationMessagePath:
   terminationMessagePolicy:
@@ -388,10 +389,18 @@ agent:
   alwaysPullImage: false
   podRetention: "Never"
   showRawYaml: true
-  volumes: []
-  workspaceVolume: {}
+  volumes: 
+  - type: PVC
+    claimName: jenkins-pvc
+    mountPath: /home/jenkins/agent
+    readOnly: false
+  workspaceVolume: 
+    type: PVC
+    claimName: jenkins-pvc
+    readOnly: false
   envVars: []
-  nodeSelector: {}
+  nodeSelector: 
+    alpha.eksctl.io/nodegroup-name: JenkinsNode
   command:
   args: "\${computer.jnlpmac} \${computer.name}"
   sideContainerName: "jnlp"
