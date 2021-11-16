@@ -1,12 +1,5 @@
-FROM jenkins/jenkins:latest
+FROM wordpress:5.8.2-apache
 
-USER root
+COPY wp-config.php /var/www/html/wp-config.php
 
-COPY install_docker.sh /install_docker.sh
-RUN chmod +x /install_docker.sh
-RUN /install_docker.sh
-
-RUN usermod -aG docker jenkins
-RUN setfacl -Rm d:g:docker:rwx,g:docker:rwx /var/run/
-
-USER root
+WORKDIR /var/www/html
