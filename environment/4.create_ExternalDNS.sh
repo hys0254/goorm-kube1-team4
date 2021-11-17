@@ -93,19 +93,19 @@ hostzoneId=`aws route53 list-hosted-zones | jq -r '.HostedZones[] | select(.Name
 echo 'hostzoneId = '${hostzoneId}
 if [[ `grep "hostzone" ~/.zshrc` ]];
 then
-  echo 'alias hostzone exist';
+  echo 'export hostzone exist';
 else
-  echo 'alias hostzone not exist / alias hostzone will be inserted';
-  echo 'alias hostzone='${hostzone} >> ~/.zshrc
+  echo 'export hostzone not exist / alias hostzone will be inserted';
+  echo 'export hostzone='${hostzone} >> ~/.zshrc
 fi
 echo ''
 
 if [[ `grep "hostzone" ~/.bashrc` ]];
 then
-  echo 'alias hostzone exist';
+  echo 'export hostzone exist';
 else
-  echo 'alias hostzone not exist / alias hostzone will be inserted';
-  echo 'alias hostzone='${hostzone} >> ~/.bashrc
+  echo 'export hostzone not exist / alias hostzone will be inserted';
+  echo 'export hostzone='${hostzone} >> ~/.bashrc
 fi
 echo ''
 
