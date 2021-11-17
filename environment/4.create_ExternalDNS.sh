@@ -58,12 +58,12 @@ echo ''
 if [ "`aws iam list-open-id-connect-providers | grep ${OIDCProvider}`" ]
 then
   echo 'IAM OIDC is exist... Create iamserviceaccount with AllowExternalDNSUpdates  '
-  eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=external-dns --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AllowExternalDNSUpdates --override-existing-serviceaccounts --approve
+  eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=default --name=external-dns --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AllowExternalDNSUpdates --override-existing-serviceaccounts --approve
   echo 'Create iamserviceaccount with AllowExternalDNSUpdates success'
 else
   echo 'IAM OIDC is not exist... Create IAM OIDC Provider  '
   eksctl utils associate-iam-oidc-provider --region=ap-northeast-2 --cluster=${CLUSTER_NAME} --approve
-  eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=kube-system --name=external-dns --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AllowExternalDNSUpdates --override-existing-serviceaccounts --approve
+  eksctl create iamserviceaccount --cluster=${CLUSTER_NAME} --namespace=default --name=external-dns --attach-policy-arn=arn:aws:iam::${ACCOUNT}:policy/AllowExternalDNSUpdates --override-existing-serviceaccounts --approve
   echo 'Create iamserviceaccount with AllowExternalDNSUpdates success'
 fi
 echo ''
@@ -185,32 +185,33 @@ echo ''
 echo 'Apply external-dns-account.yaml'
 kubectl apply -f EX_DNS/external-dns-account.yaml 
 
-echo 'make AssumeRoleWithWebIdentity with trust_policy.json...'
-cat > EX_DNS/trust-policy.json <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${ACCOUNT}:oidc-provider/oidc.eks.ap-northeast-2.amazonaws.com/id/${OIDCProvider}"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "oidc.eks.ap-northeast-2.amazonaws.com/id/${OIDCProvider}:sub": "system:serviceaccount:kube-system:external-dns"
-        }
-      }
-    }
-  ]
-}
-EOF
-
-echo 'Create External_DNS_DriverRole with trust-policy.json'
-aws iam create-role --role-name External_DNS_DriverRole --assume-role-policy-document file://EX_DNS/trust-policy.json | grep External_DNS_DriverRole
-
-echo 'Attach Role_Policy to AmazonEKS_EFS_CSI_DriverRole'
-aws iam attach-role-policy --policy-arn arn:aws:iam::${ACCOUNT}:policy/AllowExternalDNSUpdates --role-name External_DNS_DriverRole
+#echo 'make AssumeRoleWithWebIdentity with trust_policy.json...'
+#cat > EX_DNS/trust-policy.json <<EOF
+#{
+#  "Version": "2012-10-17",
+#  "Statement": [
+#    {
+#      "Sid": "",
+#      "Effect": "Allow",
+#      "Principal": {
+#        "Federated": "arn:aws:iam::${ACCOUNT}:oidc-provider/oidc.eks.ap-northeast-2.amazonaws.com/id/${OIDCProvider}"
+#      },
+#      "Action": "sts:AssumeRole",
+#      "Condition": {
+#        "StringEquals": {
+#          "oidc.eks.ap-northeast-2.amazonaws.com/id/${OIDCProvider}:sub": "system:serviceaccount:default:external-dns"
+#        }
+#      }
+#    }
+#  ]
+#}
+#EOF
+#
+#echo 'Create External_DNS_DriverRole with trust-policy.json'
+#aws iam create-role --role-name External_DNS_DriverRole --assume-role-policy-document file://EX_DNS/trust-policy.json | grep External_DNS_DriverRole
+#
+#echo 'Attach Role_Policy to AmazonEKS_EFS_CSI_DriverRole'
+#aws iam attach-role-policy --policy-arn arn:aws:iam::${ACCOUNT}:policy/AllowExternalDNSUpdates --role-name External_DNS_DriverRole
 
 
 INS_NUM=`aws iam list-roles | jq '.[][].RoleName' | grep NodeInstanceRole | wc -l`
