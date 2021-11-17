@@ -89,7 +89,6 @@ kubectl apply -f CSI/EFS/efs-service-account.yaml
 
   # 인스턴스 개수에 따라 인스턴스마다 AmazonEKS_EFS_CSI_Driver_Policy 정책 연결
   # 정책을 중복 연결하는 것은 오류가 발생하지 않아 중복체크하는 로직은 주석처리
-  # aws iam list-attached-role-policies --role-name eksctl-t4ClusterEKS-nodegroup-dbN-NodeInstanceRole-1LQL42994HOQA | jq -r '.AttachedPolicies[].PolicyName' | grep AmazonEKS_EFS_CSI_Driver_Policy
 INS_NUM=`aws iam list-roles | jq '.[][].RoleName' | grep NodeInstanceRole | wc -l`
 for ((i=1; i<=${INS_NUM}; i++)); do
 INS_ROLENAME=`aws iam list-roles | jq -r '.[][].RoleName' | grep nodegroup | sed -n ${i}p`
@@ -97,7 +96,7 @@ aws iam attach-role-policy \
  --role-name ${INS_ROLENAME} \
  --policy-arn arn:aws:iam::${ACCOUNT}:policy/AmazonEKS_EFS_CSI_Driver_Policy
 
-echo ''
+echo ${i}'번째 인스턴스Role에 정책 연결 성공.'
 done
 
 #if [ "`aws iam list-open-id-connect-providers | grep ${OIDCProvider}`" ]
@@ -145,16 +144,14 @@ aws ec2 authorize-security-group-ingress --group-id ${SG_ID} --protocol tcp --po
 FS_ID=`aws efs create-file-system --region ${AWS_REGION} --performance-mode generalPurpose --query 'FileSystemId' --output text | grep fs`
 
 ## 단계 6 : 파일시스템 생성용 반복문
-# TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq '.[] | select(.MapPublicIpOnLaunch==false)' | grep SubnetId | wc -l`
 TEMPNUM=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r "[.[] | select(.MapPublicIpOnLaunch==false)] | length"`
 
 echo 'TEMPNUM : '${TEMPNUM}
 
 for ((i=0; i<${TEMPNUM}; i++)); do
-# subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .SubnetId"`
 subnetId=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r "[.[] | select(.MapPublicIpOnLaunch==false)] | .[${i}].SubnetId"`
-# avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r ".[${i}] | select(.MapPublicIpOnLaunch==false) | .AvailabilityZone"`
 avZone=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}" --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock,MapPublicIpOnLaunch:MapPublicIpOnLaunch}' --output json | jq -r "[.[] | select(.MapPublicIpOnLaunch==false)] | .[${i}].AvailabilityZone"`
+
 echo ${subnetId}' - '${avZone}
 #aws efs create-mount-target --file-system-id ${FS_ID} --subnet-id ${subnetId} --security-groups ${SG_ID}
 `aws efs create-mount-target \
