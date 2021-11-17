@@ -36,10 +36,10 @@ else
 fi
 echo ''
 
-if [[ `grep '#export PATH=$HOME/bin:/usr/local/bin:$PATH' ~/.zshrc` ]];
+if [[ `grep '# export PATH=$HOME/bin:/usr/local/bin:$PATH' ~/.zshrc` ]];
 then
   echo 'export PATH not exist & edit ~/.zshrc';
-  sed -i 's/#export PATH/export PATH/' ~/.zshrc
+  sed -i 's/# export PATH/export PATH/' ~/.zshrc
 else
   echo 'export PATH exist';
 fi
