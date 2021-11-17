@@ -125,6 +125,28 @@ kubectl apply -f Jenkins/jenkins-sa.yaml
 
 sleep 5
 
+# jenkins DNS 세팅용
+if [[ `grep "hostzone" ~/.zshrc` ]];
+then
+  hostzone=`grep "hostzone" ~/.zshrc | cut -f 2 -d "="`
+else
+  echo 'alias hostzone not exist';
+  while true; do
+    read -p ">>>>> 사용하실 도메인을 입력해 주세요 : " hostzone
+    read -p "입력하신 도메인 : [$hostzone] 이 맞습니까?[y/N]" answer
+    case $answer in
+    [Yy]* ) echo "[$hostzone] 주소로 ServiceAccount를 생성합니다."; break;;
+    [Nn]* ) continue;;
+    * ) echo "y 또는 n으로 입력해 주세요.";;
+    esac
+  done
+  echo 'hostzone : ' ${hostzone};
+  echo 'alias hostzone='${hostzone} >> ~/.bash_profile
+  echo 'alias hostzone='${hostzone} >> ~/.zshrc
+fi
+
+`grep "hostzone" ~/.zshrc | cut -f 2 -d "="`
+
 ###### jenkins-values.yaml 생성
 cat > Jenkins/jenkins-values.yaml <<EOF
 ---
@@ -167,7 +189,8 @@ controller:
   targetPort: 8080
   serviceType: "NodePort"
   serviceExternalTrafficPolicy:
-  serviceAnnotations: {}  
+  serviceAnnotations: 
+    external-dns.alpha.kubernetes.io/hostname: jenkins.${hostzone}
   ingress:
     enabled: true
     paths: 
