@@ -96,8 +96,16 @@ then
   echo 'alias hostzone exist';
 else
   echo 'alias hostzone not exist / alias hostzone will be inserted';
-  echo 'alias hostzone='${hostzone} >> ~/.bash_profile
   echo 'alias hostzone='${hostzone} >> ~/.zshrc
+fi
+echo ''
+
+if [[ `grep "hostzone" ~/.bashrc` ]];
+then
+  echo 'alias hostzone exist';
+else
+  echo 'alias hostzone not exist / alias hostzone will be inserted';
+  echo 'alias hostzone='${hostzone} >> ~/.bashrc
 fi
 echo ''
 
