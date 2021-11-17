@@ -185,35 +185,6 @@ echo ''
 echo 'Apply external-dns-account.yaml'
 kubectl apply -f EX_DNS/external-dns-account.yaml 
 
-#echo 'make AssumeRoleWithWebIdentity with trust_policy.json...'
-#cat > EX_DNS/trust-policy.json <<EOF
-#{
-#  "Version": "2012-10-17",
-#  "Statement": [
-#    {
-#      "Sid": "",
-#      "Effect": "Allow",
-#      "Principal": {
-#        "Federated": "arn:aws:iam::${ACCOUNT}:oidc-provider/oidc.eks.ap-northeast-2.amazonaws.com/id/${OIDCProvider}"
-#      },
-#      "Action": "sts:AssumeRole",
-#      "Condition": {
-#        "StringEquals": {
-#          "oidc.eks.ap-northeast-2.amazonaws.com/id/${OIDCProvider}:sub": "system:serviceaccount:default:external-dns"
-#        }
-#      }
-#    }
-#  ]
-#}
-#EOF
-#
-#echo 'Create External_DNS_DriverRole with trust-policy.json'
-#aws iam create-role --role-name External_DNS_DriverRole --assume-role-policy-document file://EX_DNS/trust-policy.json | grep External_DNS_DriverRole
-#
-#echo 'Attach Role_Policy to AmazonEKS_EFS_CSI_DriverRole'
-#aws iam attach-role-policy --policy-arn arn:aws:iam::${ACCOUNT}:policy/AllowExternalDNSUpdates --role-name External_DNS_DriverRole
-
-
 INS_NUM=`aws iam list-roles | jq '.[][].RoleName' | grep NodeInstanceRole | wc -l`
 for ((i=1; i<=${INS_NUM}; i++)); do
 INS_ROLENAME=`aws iam list-roles | jq -r '.[][].RoleName' | grep nodegroup | sed -n ${i}p`
