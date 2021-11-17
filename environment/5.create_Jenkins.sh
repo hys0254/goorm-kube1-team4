@@ -130,22 +130,17 @@ if [[ `grep "hostzone" ~/.zshrc` ]];
 then
   hostzone=`grep "hostzone" ~/.zshrc | cut -f 2 -d "="`
 else
-  echo 'alias hostzone not exist';
-  while true; do
-    read -p ">>>>> 사용하실 도메인을 입력해 주세요 : " hostzone
-    read -p "입력하신 도메인 : [$hostzone] 이 맞습니까?[y/N]" answer
-    case $answer in
-    [Yy]* ) echo "[$hostzone] 주소로 ServiceAccount를 생성합니다."; break;;
-    [Nn]* ) continue;;
-    * ) echo "y 또는 n으로 입력해 주세요.";;
-    esac
-  done
-  echo 'hostzone : ' ${hostzone};
-  echo 'alias hostzone='${hostzone} >> ~/.bash_profile
-  echo 'alias hostzone='${hostzone} >> ~/.zshrc
+  hostzone=`grep "hostzone" ~/.bashrc | cut -f 2 -d "="`  
 fi
 
-`grep "hostzone" ~/.zshrc | cut -f 2 -d "="`
+hostzoneId=`aws route53 list-hosted-zones | jq -r '.HostedZones[] | select(.Name=="'${hostzone}'.") | .Id'`
+ACM_ARN=`aws acm list-certificates | jq -r '.CertificateSummaryList | select(.[].DomainName=="'${hostzone}'") | .[].CertificateArn'`
+
+echo ''
+echo 'Domain = '${hostzone}
+echo 'Domain_Id = '${hostzoneId}
+echo 'ACM ARN = '${ACM_ARN}
+echo ''
 
 ###### jenkins-values.yaml 생성
 cat > Jenkins/jenkins-values.yaml <<EOF
@@ -185,7 +180,7 @@ controller:
   runAsUser: 1000
   fsGroup: 1000
   securityContextCapabilities: {}
-  servicePort: 8080
+  servicePort: 80
   targetPort: 8080
   serviceType: "NodePort"
   serviceExternalTrafficPolicy:
@@ -193,14 +188,23 @@ controller:
     external-dns.alpha.kubernetes.io/hostname: jenkins.${hostzone}
   ingress:
     enabled: true
-    paths: 
+    paths: []
     apiVersion: networking.k8s.io/v1
     labels: {}
+  #    app: jenkins-ingress
     annotations:
+  # Route53 서비스용 annotation 추가
+      external-dns.alpha.kubernetes.io/hostname: jenkins.${hostzone}
       kubernetes.io/ingress.class: alb
       alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-    hostName:
+      alb.ingress.kubernetes.io/target-type: instance
+      alb.ingress.kubernetes.io/certificate-arn: ${ACM_ARN}
+      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-2016-08
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/healthcheck-path: /login
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+    hostName: jenkins.${hostzone}
     tls:
   secondaryingress:
     enabled: false
@@ -208,7 +212,7 @@ controller:
     apiVersion: extensions/v1beta1
     labels: {}
     annotations: {}
-    hostName:
+    hostName: 
     tls:
   statefulSetLabels: {}
   serviceLabels: {}
@@ -222,6 +226,7 @@ controller:
       periodSeconds: 10
       timeoutSeconds: 5
       failureThreshold: 12
+      initialDelaySeconds: 60
     livenessProbe:
       failureThreshold: 5
       httpGet:
@@ -229,13 +234,15 @@ controller:
         port: http
       periodSeconds: 10
       timeoutSeconds: 5
+      initialDelaySeconds: 120 # https://github.com/kubernetes/kubernetes/issues/62594 참고
     readinessProbe:
       failureThreshold: 3
       httpGet:
         path: '{{ default "" .Values.controller.jenkinsUriPrefix }}/login'
         port: http
       periodSeconds: 10
-      timeoutSeconds: 5
+      timeoutSeconds: 10
+      initialDelaySeconds: 60
   podDisruptionBudget:
     enabled: false
     apiVersion: "policy/v1beta1"
