@@ -113,7 +113,7 @@ done
 echo ''
 
 echo '******************* Delete Cluster Start!! '
-eksctl delte cluster -f t4_cluster.yaml
+eksctl delete cluster -f t4_cluster.yaml
 echo ''
 echo '******************* Delete Cluster Finished!! '
 
@@ -159,7 +159,5 @@ rm -rf Jenkins
 rm -rf EX_DNS
 rm -rf CSI
 rm -rf ALB
-
-eksctl delete cluster -f t4_cluster.yaml
 
 echo '>> Delete Resource, Stack Finished '
