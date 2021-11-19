@@ -4,6 +4,17 @@
 
 # Jenkins Pod 배포
 
+# ECR 레지스트리 작업 권한 노드에 추가
+INS_NUM=`aws iam list-roles | jq '.[][].RoleName' | grep NodeInstanceRole | wc -l`
+for ((i=1; i<=${INS_NUM}; i++)); do
+INS_ROLENAME=`aws iam list-roles | jq -r '.[][].RoleName' | grep nodegroup | sed -n ${i}p`
+aws iam attach-role-policy \
+ --role-name ${INS_ROLENAME} \
+ --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+
+echo ${i}'번째 인스턴스Role에 정책 연결 성공.'
+done
+
 ## jenkins namespace 생성
 kubectl create namespace jenkins
 
@@ -532,4 +543,22 @@ echo '>>>>>> Install jenkins with Helm <<<<<<'
 helm install jenkins -n jenkins -f Jenkins/jenkins-values.yaml jenkinsci/jenkins
 echo ''
 echo '## Install Jenkins Finished ##'
+echo ''
 
+## ecr 로그인 처리까지
+echo '>>> ECR Login Config Apply'
+echo ''
+cat > Jenkins/configmap.yaml <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docker-config
+data:
+  config.json: |-
+    {
+       "credsStore": "ecr-login"
+    }
+EOF
+
+kubectl apply -f Jenkins/configmap.yaml
+echo '>>> ECR Login Finished'
