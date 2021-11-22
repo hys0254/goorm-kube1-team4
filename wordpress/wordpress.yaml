@@ -30,7 +30,7 @@ spec:
               name: mysql-secret
               key: password
         - name: WORDPRESS_DB_HOST
-          value: project-database.ceiquhwnzmga.ap-northeast-2.rds.amazonaws.com:3306             
+          value: project-db.ceiquhwnzmga.ap-northeast-2.rds.amazonaws.com:3306             
       nodeSelector:
         alpha.eksctl.io/nodegroup-name: wordpress-node
 ---
