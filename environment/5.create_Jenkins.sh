@@ -182,8 +182,8 @@ controller:
   jenkinsWar: "/usr/share/jenkins/jenkins.war"
   resources:
     requests:
-      cpu: "50m"
-      memory: "256Mi"
+      cpu: "1000m"
+      memory: "1024Mi"
     limits:
       cpu: "2000m"
       memory: "4096Mi"
@@ -422,11 +422,11 @@ agent:
   runAsGroup:
   resources:
     requests:
-      cpu: "512m"
-      memory: "512Mi"
+      cpu: "1024m"
+      memory: "1024Mi"
     limits:
-      cpu: "512m"
-      memory: "512Mi"
+      cpu: "4096m"
+      memory: "4096Mi"
   alwaysPullImage: false
   podRetention: "Never"
   showRawYaml: true
