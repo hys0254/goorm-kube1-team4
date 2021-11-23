@@ -206,7 +206,7 @@ controller:
     annotations:
   # Route53 서비스용 annotation 추가
       external-dns.alpha.kubernetes.io/hostname: jenkins.${hostzone}
-      alb.ingress.kubernetes.io/group.name: t4Route
+      alb.ingress.kubernetes.io/group.name: t4route
       kubernetes.io/ingress.class: alb
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: instance
