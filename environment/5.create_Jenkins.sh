@@ -560,5 +560,5 @@ data:
     }
 EOF
 
-kubectl apply -f Jenkins/configmap.yaml
+kubectl apply -f Jenkins/configmap.yaml -n jenkins
 echo '>>> ECR Login Finished'
