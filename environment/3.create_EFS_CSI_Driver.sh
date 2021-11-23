@@ -168,7 +168,11 @@ curl -o CSI/EFS/storageclass.yaml https://raw.githubusercontent.com/kubernetes-s
 sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" CSI/EFS/storageclass.yaml
 sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" ../manifest/jpashop/base/volume.yaml
 sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" ../manifest/wordpress/base/volume.yaml
-cat CSI/EFS/storageclass.yaml
-
-kubectl apply -f CSI/EFS/storageclass.yaml
-
+echo ''
+echo ">> Edit Service's volume.yaml finished"
+echo 'Check jpashop - volume.yaml'
+cat ../manifest/jpashop/base/volume.yaml 
+echo ''
+echo 'Check worepress - volume.yaml'
+cat ../manifest/worepress/base/volume.yaml
+echo ''
