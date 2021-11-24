@@ -174,5 +174,5 @@ echo 'Check jpashop - volume.yaml'
 cat ../manifest/jpashop/base/volume.yaml 
 echo ''
 echo 'Check worepress - volume.yaml'
-cat ../manifest/worepress/base/volume.yaml
+cat ../manifest/wordpress/base/volume.yaml
 echo ''
