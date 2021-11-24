@@ -33,9 +33,9 @@ vpc:
 #  - "ap-northeast-2b"
  
 managedNodeGroups:
-  - name: DBNode
+  - name: JavaNode
     instanceType: t2.large
-    instanceName: "DBInstance"
+    instanceName: "JavaInstance"
     minSize: 2
     desiredCapacity: 2
     maxSize: 3
