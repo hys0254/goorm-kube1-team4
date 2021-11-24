@@ -5,7 +5,7 @@ metadata:
   labels:
     app: wordpress-app
 spec:
-  replicas: 2
+  replicas: 6
   selector:
     matchLabels:
       app: wordpress-app
