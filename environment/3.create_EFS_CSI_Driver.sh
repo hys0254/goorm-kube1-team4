@@ -166,12 +166,12 @@ done
 echo '>>> Download storageclass.yaml & Edit <<<'
 curl -o CSI/EFS/storageclass.yaml https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/master/examples/kubernetes/dynamic_provisioning/specs/storageclass.yaml
 sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" CSI/EFS/storageclass.yaml
-sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" ../manifest/spring-petclinic/base/volume.yaml
+sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" ../manifest/jpasampleshop/base/volume.yaml
 sed -i "/fileSystemId/c\\  fileSystemId: ${FS_ID}" ../manifest/wordpress/base/volume.yaml
 echo ''
 echo ">> Edit Service's volume.yaml finished"
 echo 'Check jpashop - volume.yaml'
-cat ../manifest/spring-petclinic/base/volume.yaml 
+cat ../manifest/jpasampleshop/base/volume.yaml 
 echo ''
 echo 'Check wordpress - volume.yaml'
 cat ../manifest/wordpress/base/volume.yaml
