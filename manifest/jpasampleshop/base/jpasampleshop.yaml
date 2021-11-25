@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jpasampleshop-deployment
+  labels:
+    app: jpasampleshop-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: jpasampleshop-app
+  template:
+    metadata:
+      labels:
+        app: jpasampleshop-app
+    spec:
+      containers:
+      - name: jpasampleshop
+        image: 963886026253.dkr.ecr.ap-northeast-2.amazonaws.com/team4/jpasampleshop:11
+        ports:
+        - containerPort: 8080
+        env:
+        - name: JPASAMPLESHOP_DB_NAME
+          value: jpasampleshop
+        - name: JPASAMPLESHOP_DB_USER
+          value: jpasampleshop
+        - name: JPASAMPLESHOP_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jpasampleshop-secret
+              key: password
+        - name: JPASAMPLESHOP_DB_HOST
+          value: jpasampleshop.cfgwexy8deov.ap-northeast-2.rds.amazonaws.com
+      nodeSelector:
+        alpha.eksctl.io/nodegroup-name: JavaNode
+---
