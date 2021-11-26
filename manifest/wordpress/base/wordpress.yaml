@@ -4,8 +4,16 @@ metadata:
   name: wordpress-deployment
   labels:
     app: wordpress-app
+  annotations:
+    kubernetes.io/change-cause: "Wordpress rolling update version 5.8.1"
 spec:
-  replicas: 3
+  replicas: 10
+  minReadySeconds: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: wordpress-app
@@ -16,7 +24,7 @@ spec:
     spec:
       containers:
       - name: wordpress
-        image: wordpress:latest
+        image: wordpress:5.8.1
         ports:
         - containerPort: 80
         env:
