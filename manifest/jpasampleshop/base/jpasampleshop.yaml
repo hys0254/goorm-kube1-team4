@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: jpasampleshop
-        image: 963886026253.dkr.ecr.ap-northeast-2.amazonaws.com/team4/jpasampleshop:36
+        image: 963886026253.dkr.ecr.ap-northeast-2.amazonaws.com/team4/jpasampleshop:37
         ports:
         - containerPort: 8080
         env:
