@@ -38,7 +38,7 @@ spec:
               name: mysql-secret
               key: password
         - name: WORDPRESS_DB_HOST
-          value: wordpress.cfgwexy8deov.ap-northeast-2.rds.amazonaws.com
+          value: pressword.cfgwexy8deov.ap-northeast-2.rds.amazonaws.com
       nodeSelector:
         alpha.eksctl.io/nodegroup-name: WPNode
 ---
