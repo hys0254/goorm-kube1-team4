@@ -29,9 +29,9 @@ spec:
         - containerPort: 80
         env:
         - name: WORDPRESS_DB_NAME
-          value: wordpress
+          value: pressword
         - name: WORDPRESS_DB_USER
-          value: wordpress
+          value: pressword
         - name: WORDPRESS_DB_PASSWORD
           valueFrom:
             secretKeyRef:
