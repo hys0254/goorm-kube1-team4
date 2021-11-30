@@ -19,6 +19,7 @@ metadata:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: instance
+    external-dns.alpha.kubernetes.io/hostname: k8s-wordpres-ingress-156af1ea3f-1588498059.ap-northeast-2.elb.amazonaws.com
 #    alb.ingress.kubernetes.io/group.name: t4route
 #    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:963886026253:certificate/a657566b-e67d-4baf-a3d2-393d1c8409a1
 #    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-2016-08
