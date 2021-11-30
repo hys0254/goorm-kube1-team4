@@ -7,7 +7,7 @@ metadata:
   annotations:
     kubernetes.io/change-cause: "Wordpress rolling update version latest from 5.8.1"
 spec:
-  replicas: 6
+  replicas: 10
   minReadySeconds: 1
   strategy:
     type: RollingUpdate
@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: wordpress
-        image: wordpress:5.8.1
+        image: wordpress:latest
         ports:
         - containerPort: 80
         env:
